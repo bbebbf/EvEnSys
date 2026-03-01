@@ -109,6 +109,15 @@ class UserRepository
         $stmt->execute();
     }
 
+    public function removePassword(int $userId): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE `user` SET user_passwd = NULL WHERE user_id = ?'
+        );
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+    }
+
     public function delete(int $userId): void
     {
         $stmt = $this->db->prepare('DELETE FROM `user` WHERE user_id = ?');
@@ -121,7 +130,7 @@ class UserRepository
         if ($active) {
             $stmt = $this->db->prepare("UPDATE `user` SET user_is_active = b'1' WHERE user_id = ?");
         } else {
-            $stmt = $this->db->prepare("UPDATE `user` SET user_is_active = b'0' WHERE user_id = ?");
+            $stmt = $this->db->prepare("UPDATE `user` SET user_is_active = b'0', user_role = 0 WHERE user_id = ?");
         }
         $stmt->bind_param('i', $userId);
         $stmt->execute();
@@ -136,7 +145,7 @@ class UserRepository
 
     public function countAdmins(): int
     {
-        $result = $this->db->query("SELECT COUNT(*) FROM `user` WHERE user_role >= 1");
+        $result = $this->db->query("SELECT COUNT(*) FROM `user` WHERE user_is_active = b'1' AND user_role >= 1");
         return (int)$result->fetch_row()[0];
     }
 

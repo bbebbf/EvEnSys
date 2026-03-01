@@ -315,7 +315,7 @@ class OidcController
 
     /**
      * 1. Known OIDC identity  → return existing user
-     * 2. Email matches user   → link + (auto-activate if inactive) + return user
+     * 2. Email matches user   → link + remove local password + (auto-activate if inactive) + return user
      * 3. New user             → create + link + activate + return user
      */
     private function findOrProvisionUser(
@@ -332,6 +332,7 @@ class OidcController
         $existing = $this->userRepo->findByEmail($email);
         if ($existing !== null) {
             $this->identityRepo->create($existing->userId, $providerId, $sub);
+            $this->userRepo->removePassword($existing->userId);
             if (!$existing->userIsActive) {
                 $this->userRepo->activate($existing->userId);
             }
