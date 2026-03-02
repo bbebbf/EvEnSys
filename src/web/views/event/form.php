@@ -56,6 +56,13 @@ $action = $isEdit ? '/events/' . $event->eventGuid . '/edit' : '/events/create';
       </div>
 
       <div class="mb-3">
+        <label for="event_description" class="form-label">Beschreibung</label>
+        <textarea class="form-control"
+                  id="event_description" name="event_description"
+                  rows="6"><?= html_out($val('event_description', 'eventDescription')) ?></textarea>
+      </div>
+
+      <div class="mb-3">
         <label for="event_date" class="form-label">Datum &amp; Uhrzeit <span class="text-danger">*</span></label>
         <?php
         // Format the existing date for datetime-local input (Y-m-d\TH:i)
@@ -86,13 +93,6 @@ $action = $isEdit ? '/events/' . $event->eventGuid . '/edit' : '/events/create';
         <?php if (isset($errors['event_location'])): ?>
           <div class="invalid-feedback"><?= html_out($errors['event_location']) ?></div>
         <?php endif; ?>
-      </div>
-
-      <div class="mb-3">
-        <label for="event_description" class="form-label">Beschreibung</label>
-        <textarea class="form-control"
-                  id="event_description" name="event_description"
-                  rows="6"><?= html_out($val('event_description', 'eventDescription')) ?></textarea>
       </div>
 
       <div class="row">

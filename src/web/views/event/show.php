@@ -18,6 +18,10 @@
       <?php endif; ?>
     </div>
 
+    <?php if ($event->eventDescription !== null): ?>
+      <p class="text-muted"><?= nl2br(html_out($event->eventDescription)) ?></p>
+    <?php endif; ?>
+
     <dl class="row mb-4">
       <dt class="col-sm-3">Datum &amp; Uhrzeit</dt>
       <dd class="col-sm-9"><?= event_date_out($event->eventDate) ?></dd>
@@ -59,11 +63,6 @@
         </dd>
       <?php endif; ?>
     </dl>
-
-    <?php if ($event->eventDescription !== null): ?>
-      <h5>Beschreibung</h5>
-      <p class="text-muted"><?= nl2br(html_out($event->eventDescription)) ?></p>
-    <?php endif; ?>
 
   </div>
 
@@ -122,7 +121,7 @@
               <input type="hidden" name="enroll_type" value="other">
               <div class="input-group input-group-sm">
                 <input type="text" name="subscriber_name" class="form-control"
-                       placeholder="Person anmelden" maxlength="100" required>
+                       placeholder="Eine andere Person anmelden" maxlength="100" required>
                 <button type="submit" class="btn btn-outline-secondary">Anmelden</button>
               </div>
             </form>
