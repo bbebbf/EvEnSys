@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-class ActivationTokenRepository
+class PasswordResetRepository implements PasswordResetRepositoryInterface
 {
     public function __construct(private mysqli $db) {}
 
     /**
-     * Deletes any existing activation tokens for the user, creates a new one
-     * that expires in 24 hours, and returns the raw (unhashed) token to be
+     * Deletes any existing tokens for the user, creates a new one that
+     * expires in one hour, and returns the raw (unhashed) token to be
      * sent by email.
      */
     public function createToken(int $userId): string
@@ -18,8 +18,8 @@ class ActivationTokenRepository
         $tokenHash = hash('sha256', $rawToken);
 
         $stmt = $this->db->prepare(
-            "INSERT INTO activation_token (user_id, token_hash, token_expires_at)
-             VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))"
+            "INSERT INTO password_reset (user_id, reset_token_hash, reset_expires_at)
+             VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))"
         );
         $stmt->bind_param('is', $userId, $tokenHash);
         $stmt->execute();
@@ -29,18 +29,18 @@ class ActivationTokenRepository
 
     /**
      * Hashes the raw token and looks up a record that is not yet expired
-     * and not yet used. Returns ['token_id' => ..., 'user_id' => ...] or null.
+     * and not yet used. Returns ['reset_id' => ..., 'user_id' => ...] or null.
      */
     public function findValidByToken(string $rawToken): ?array
     {
         $tokenHash = hash('sha256', $rawToken);
 
         $stmt = $this->db->prepare(
-            "SELECT token_id, user_id
-               FROM activation_token
-              WHERE token_hash = ?
-                AND token_expires_at > NOW()
-                AND token_used = b'0'"
+            "SELECT reset_id, user_id
+               FROM password_reset
+              WHERE reset_token_hash = ?
+                AND reset_expires_at > NOW()
+                AND reset_used = b'0'"
         );
         $stmt->bind_param('s', $tokenHash);
         $stmt->execute();
@@ -49,18 +49,18 @@ class ActivationTokenRepository
         return $row ?: null;
     }
 
-    public function markUsed(int $tokenId): void
+    public function markUsed(int $resetId): void
     {
         $stmt = $this->db->prepare(
-            "UPDATE activation_token SET token_used = b'1' WHERE token_id = ?"
+            "UPDATE password_reset SET reset_used = b'1' WHERE reset_id = ?"
         );
-        $stmt->bind_param('i', $tokenId);
+        $stmt->bind_param('i', $resetId);
         $stmt->execute();
     }
 
     public function deleteByUser(int $userId): void
     {
-        $stmt = $this->db->prepare('DELETE FROM activation_token WHERE user_id = ?');
+        $stmt = $this->db->prepare('DELETE FROM password_reset WHERE user_id = ?');
         $stmt->bind_param('i', $userId);
         $stmt->execute();
     }

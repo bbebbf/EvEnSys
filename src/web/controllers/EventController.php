@@ -3,28 +3,28 @@ declare(strict_types=1);
 
 class EventController
 {
-    private EventRepository $eventRepo;
-
-    public function __construct(private mysqli $db)
-    {
-        $this->eventRepo = new EventRepository($db);
-    }
+    public function __construct(
+        private EventRepositoryInterface $eventRepo,
+        private SessionInterface $session,
+        private ViewInterface $view,
+        private ResponseInterface $response,
+    ) {}
 
     public function home(): void
     {
-        if (Session::isLoggedIn()) {
-            ControllerTools::redirect('/events');
+        if ($this->session->isLoggedIn()) {
+            $this->response->redirect('/events');
         }
         $upcomingEvents = $this->eventRepo->findUpcoming(3);
-        View::render('home/index', ['pageTitle' => 'Startseite', 'upcomingEvents' => $upcomingEvents]);
+        $this->view->render('home/index', ['pageTitle' => 'Startseite', 'upcomingEvents' => $upcomingEvents]);
     }
 
     public function index(): void
     {
-        Session::requireLogin();
-        $isAdmin = Session::isAdmin();
+        $this->session->requireLogin();
+        $isAdmin = $this->session->isAdmin();
         $events  = $this->eventRepo->findAllUpcoming(!$isAdmin);
-        View::render('event/index', [
+        $this->view->render('event/index', [
             'pageTitle' => 'Bevorstehende Veranstaltungen',
             'events'    => $events,
             'isAdmin'   => $isAdmin,
@@ -33,10 +33,10 @@ class EventController
 
     public function indexAll(): void
     {
-        Session::requireLogin();
-        $isAdmin = Session::isAdmin();
+        $this->session->requireLogin();
+        $isAdmin = $this->session->isAdmin();
         $events  = $this->eventRepo->findAll(!$isAdmin);
-        View::render('event/index', [
+        $this->view->render('event/index', [
             'pageTitle' => 'Alle Veranstaltungen',
             'events'    => $events,
             'isAdmin'   => $isAdmin,
@@ -45,20 +45,20 @@ class EventController
 
     public function indexMy(): void
     {
-        Session::requireLogin();
-        $events = $this->eventRepo->findAllByUser(Session::getUserId());
-        View::render('event/index', [
+        $this->session->requireLogin();
+        $events = $this->eventRepo->findAllByUser($this->session->getUserId());
+        $this->view->render('event/index', [
             'pageTitle' => 'Meine Veranstaltungen',
             'events'    => $events,
-            'isAdmin'   => Session::isAdmin(),
+            'isAdmin'   => $this->session->isAdmin(),
         ]);
     }
 
     public function indexEnrolled(): void
     {
-        Session::requireLogin();
-        $enrollments = $this->eventRepo->findEnrolledByUser(Session::getUserId());
-        View::render('event/enrolled', [
+        $this->session->requireLogin();
+        $enrollments = $this->eventRepo->findEnrolledByUser($this->session->getUserId());
+        $this->view->render('event/enrolled', [
             'pageTitle'   => 'Meine Anmeldungen',
             'enrollments' => $enrollments,
         ]);
@@ -66,18 +66,18 @@ class EventController
 
     public function show(string $guid): void
     {
-        $event     = $this->eventRepo->findByGuid($guid) ?? ControllerTools::abort_NotFound_404();
-        $isAdmin   = Session::isAdmin();
-        $isCreator = Session::isLoggedIn() && Session::getUserId() === $event->creatorUserId;
+        $event     = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
+        $isAdmin   = $this->session->isAdmin();
+        $isCreator = $this->session->isLoggedIn() && $this->session->getUserId() === $event->creatorUserId;
 
         if (!$event->eventIsVisible && !$isAdmin && !$isCreator) {
-            ControllerTools::abort_NotFound_404();
+            $this->response->abort404();
         }
 
         $subscribers      = $this->eventRepo->findSubscribersByEvent($event->eventId);
-        $isEnrolledAsSelf = Session::isLoggedIn()
-            && $this->eventRepo->isUserEnrolledAsSelf($event->eventId, Session::getUserId());
-        View::render('event/show', [
+        $isEnrolledAsSelf = $this->session->isLoggedIn()
+            && $this->eventRepo->isUserEnrolledAsSelf($event->eventId, $this->session->getUserId());
+        $this->view->render('event/show', [
             'pageTitle'        => $event->eventTitle,
             'event'            => $event,
             'subscribers'      => $subscribers,
@@ -90,18 +90,18 @@ class EventController
 
     public function enroll(Request $req, string $guid): void
     {
-        Session::requireLogin();
+        $this->session->requireLogin();
 
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
-        $event  = $this->eventRepo->findByGuid($guid) ?? ControllerTools::abort_NotFound_404();
-        $userId = Session::getUserId();
+        $event  = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
+        $userId = $this->session->getUserId();
 
         if (!$event->eventIsVisible) {
-            Session::setFlash('error', 'Anmeldungen für versteckte Veranstaltungen sind nicht möglich.');
-            ControllerTools::redirect('/events/' . $guid);
+            $this->session->setFlash('error', 'Anmeldungen für versteckte Veranstaltungen sind nicht möglich.');
+            $this->response->redirect('/events/' . $guid);
         }
 
         $type = $req->post('enroll_type', '');
@@ -109,51 +109,51 @@ class EventController
         if ($event->eventMaxSubscriber !== null) {
             $count = $this->eventRepo->countSubscribers($event->eventId);
             if ($count >= $event->eventMaxSubscriber) {
-                Session::setFlash('error', 'Diese Veranstaltung ist ausgebucht.');
-                ControllerTools::redirect('/events/' . $guid);
+                $this->session->setFlash('error', 'Diese Veranstaltung ist ausgebucht.');
+                $this->response->redirect('/events/' . $guid);
             }
         }
 
         if ($type === 'self') {
             if ($this->eventRepo->isUserEnrolledAsSelf($event->eventId, $userId)) {
-                Session::setFlash('error', 'Sie sind bereits für diese Veranstaltung angemeldet.');
-                ControllerTools::redirect('/events/' . $guid);
+                $this->session->setFlash('error', 'Sie sind bereits für diese Veranstaltung angemeldet.');
+                $this->response->redirect('/events/' . $guid);
             }
             $this->eventRepo->createSubscriber($event->eventId, $userId, true, null);
-            Session::setFlash('success', 'Sie wurden erfolgreich angemeldet.');
+            $this->session->setFlash('success', 'Sie wurden erfolgreich angemeldet.');
         } elseif ($type === 'other') {
             $name = trim($req->post('subscriber_name', ''));
             if ($name === '') {
-                Session::setFlash('error', 'Bitte geben Sie einen Namen ein.');
-                ControllerTools::redirect('/events/' . $guid);
+                $this->session->setFlash('error', 'Bitte geben Sie einen Namen ein.');
+                $this->response->redirect('/events/' . $guid);
             }
             if (mb_strlen($name) > 100) {
-                Session::setFlash('error', 'Der Name darf maximal 100 Zeichen lang sein.');
-                ControllerTools::redirect('/events/' . $guid);
+                $this->session->setFlash('error', 'Der Name darf maximal 100 Zeichen lang sein.');
+                $this->response->redirect('/events/' . $guid);
             }
             $this->eventRepo->createSubscriber($event->eventId, $userId, false, $name);
-            Session::setFlash('success', $name . ' wurde erfolgreich angemeldet.');
+            $this->session->setFlash('success', $name . ' wurde erfolgreich angemeldet.');
         } else {
-            ControllerTools::redirect('/events/' . $guid);
+            $this->response->redirect('/events/' . $guid);
         }
 
-        ControllerTools::redirect('/events/' . $guid);
+        $this->response->redirect('/events/' . $guid);
     }
 
     public function showUnenroll(Request $req, string $guid, string $subscriberGuid): void
     {
-        Session::requireLogin();
-        $event      = $this->eventRepo->findByGuid($guid) ?? ControllerTools::abort_NotFound_404();
-        $subscriber = $this->eventRepo->findSubscriberByGuid($subscriberGuid) ?? ControllerTools::abort_NotFound_404();
+        $this->session->requireLogin();
+        $event      = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
+        $subscriber = $this->eventRepo->findSubscriberByGuid($subscriberGuid) ?? $this->response->abort404();
 
-        if ($subscriber->creatorUserId !== Session::getUserId()) {
-            ControllerTools::abort_Forbidden_403();
+        if ($subscriber->creatorUserId !== $this->session->getUserId()) {
+            $this->response->abort403();
         }
 
         $source    = $req->get('source') === 'enrolled' ? 'enrolled' : '';
         $cancelUrl = $source === 'enrolled' ? '/events/enrolled' : '/events/' . $event->eventGuid;
 
-        View::render('event/confirm_unenroll', [
+        $this->view->render('event/confirm_unenroll', [
             'pageTitle'  => 'Abmeldung bestätigen',
             'event'      => $event,
             'subscriber' => $subscriber,
@@ -164,49 +164,49 @@ class EventController
 
     public function unenroll(Request $req, string $guid, string $subscriberGuid): void
     {
-        Session::requireLogin();
+        $this->session->requireLogin();
 
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
-        $event  = $this->eventRepo->findByGuid($guid) ?? ControllerTools::abort_NotFound_404();
-        $userId = Session::getUserId();
+        $event  = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
+        $userId = $this->session->getUserId();
 
         if (!$this->eventRepo->deleteSubscriber($subscriberGuid, $userId)) {
-            Session::setFlash('error', 'Anmeldung nicht gefunden oder Sie haben keine Berechtigung, sie zu entfernen.');
+            $this->session->setFlash('error', 'Anmeldung nicht gefunden oder Sie haben keine Berechtigung, sie zu entfernen.');
         } else {
-            Session::setFlash('success', 'Anmeldung entfernt.');
+            $this->session->setFlash('success', 'Anmeldung entfernt.');
         }
 
         $redirectUrl = $req->post('source') === 'enrolled' ? '/events/enrolled' : '/events/' . $guid;
-        ControllerTools::redirect($redirectUrl);
+        $this->response->redirect($redirectUrl);
     }
 
     public function toggleVisible(Request $req, string $guid): void
     {
-        Session::requireLogin();
+        $this->session->requireLogin();
 
-        if (!Session::isAdmin()) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->isAdmin()) {
+            $this->response->abort403();
         }
 
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
-        $event = $this->eventRepo->findByGuid($guid) ?? ControllerTools::abort_NotFound_404();
+        $event = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
         $this->eventRepo->setVisible($event->eventId, !$event->eventIsVisible);
 
         $msg = $event->eventIsVisible ? 'Veranstaltung ist jetzt versteckt.' : 'Veranstaltung ist jetzt sichtbar.';
-        Session::setFlash('success', $msg);
-        ControllerTools::redirect('/events/' . $guid);
+        $this->session->setFlash('success', $msg);
+        $this->response->redirect('/events/' . $guid);
     }
 
     public function showCreate(): void
     {
-        Session::requireLogin();
-        View::render('event/form', [
+        $this->session->requireLogin();
+        $this->view->render('event/form', [
             'pageTitle' => 'Veranstaltung erstellen',
             'event'     => null,
             'errors'    => [],
@@ -216,16 +216,16 @@ class EventController
 
     public function create(Request $req): void
     {
-        Session::requireLogin();
+        $this->session->requireLogin();
 
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
         ['errors' => $errors, 'data' => $data] = $this->validateEventData($req);
 
         if (!empty($errors)) {
-            View::render('event/form', [
+            $this->view->render('event/form', [
                 'pageTitle' => 'Create Event',
                 'event'     => null,
                 'errors'    => $errors,
@@ -234,21 +234,21 @@ class EventController
             return;
         }
 
-        $guid = $this->eventRepo->create(Session::getUserId(), $data);
-        Session::setFlash('success', 'Veranstaltung erfolgreich erstellt. Nach einer Prüfung wird sie innerhalb der nächsten Stunden für andere sichtbar sein.');
-        ControllerTools::redirect('/events/' . $guid);
+        $guid = $this->eventRepo->create($this->session->getUserId(), $data);
+        $this->session->setFlash('success', 'Veranstaltung erfolgreich erstellt. Nach einer Prüfung wird sie innerhalb der nächsten Stunden für andere sichtbar sein.');
+        $this->response->redirect('/events/' . $guid);
     }
 
     public function showEdit(Request $req, string $guid): void
     {
-        Session::requireLogin();
-        $event = $this->eventRepo->findByGuid($guid) ?? ControllerTools::abort_NotFound_404();
+        $this->session->requireLogin();
+        $event = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
 
-        if (!$this->eventRepo->isOwner($event->eventId, Session::getUserId())) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->eventRepo->isOwner($event->eventId, $this->session->getUserId())) {
+            $this->response->abort403();
         }
 
-        View::render('event/form', [
+        $this->view->render('event/form', [
             'pageTitle' => 'Veranstaltung bearbeiten',
             'event'     => $event,
             'errors'    => [],
@@ -258,22 +258,22 @@ class EventController
 
     public function update(Request $req, string $guid): void
     {
-        Session::requireLogin();
+        $this->session->requireLogin();
 
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
-        $event = $this->eventRepo->findByGuid($guid) ?? ControllerTools::abort_NotFound_404();
+        $event = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
 
-        if (!$this->eventRepo->isOwner($event->eventId, Session::getUserId())) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->eventRepo->isOwner($event->eventId, $this->session->getUserId())) {
+            $this->response->abort403();
         }
 
         ['errors' => $errors, 'data' => $data] = $this->validateEventData($req);
 
         if (!empty($errors)) {
-            View::render('event/form', [
+            $this->view->render('event/form', [
                 'pageTitle' => 'Edit Event',
                 'event'     => $event,
                 'errors'    => $errors,
@@ -283,20 +283,20 @@ class EventController
         }
 
         $this->eventRepo->update($event->eventId, $data);
-        Session::setFlash('success', 'Veranstaltung erfolgreich aktualisiert.');
-        ControllerTools::redirect('/events/' . $guid);
+        $this->session->setFlash('success', 'Veranstaltung erfolgreich aktualisiert.');
+        $this->response->redirect('/events/' . $guid);
     }
 
     public function showDelete(string $guid): void
     {
-        Session::requireLogin();
-        $event = $this->eventRepo->findByGuid($guid) ?? ControllerTools::abort_NotFound_404();
+        $this->session->requireLogin();
+        $event = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
 
-        if (!$this->eventRepo->isOwner($event->eventId, Session::getUserId())) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->eventRepo->isOwner($event->eventId, $this->session->getUserId())) {
+            $this->response->abort403();
         }
 
-        View::render('event/confirm_delete', [
+        $this->view->render('event/confirm_delete', [
             'pageTitle' => 'Veranstaltung löschen',
             'event'     => $event,
         ]);
@@ -304,23 +304,23 @@ class EventController
 
     public function delete(Request $req, string $guid): void
     {
-        Session::requireLogin();
+        $this->session->requireLogin();
 
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
-        $event = $this->eventRepo->findByGuid($guid) ?? ControllerTools::abort_NotFound_404();
+        $event = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
 
-        if (!$this->eventRepo->isOwner($event->eventId, Session::getUserId())) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->eventRepo->isOwner($event->eventId, $this->session->getUserId())) {
+            $this->response->abort403();
         }
 
         $this->eventRepo->deleteSubscribersByEvent($event->eventId);
         $this->eventRepo->delete($event->eventId);
 
-        Session::setFlash('success', 'Veranstaltung gelöscht.');
-        ControllerTools::redirect('/events');
+        $this->session->setFlash('success', 'Veranstaltung gelöscht.');
+        $this->response->redirect('/events');
     }
 
     private function validateEventData(Request $req): array
@@ -388,5 +388,4 @@ class EventController
             ],
         ];
     }
-
 }

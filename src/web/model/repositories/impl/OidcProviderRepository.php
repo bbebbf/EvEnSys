@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-class OidcProviderRepository
+class OidcProviderRepository implements OidcProviderRepositoryInterface
 {
     public function __construct(private mysqli $db) {}
 

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-class UserRepository
+class UserRepository implements UserRepositoryInterface
 {
     public function __construct(private mysqli $db) {}
 

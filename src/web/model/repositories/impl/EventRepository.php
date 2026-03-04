@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-class EventRepository
+class EventRepository implements EventRepositoryInterface
 {
     public function __construct(private mysqli $db) {}
 

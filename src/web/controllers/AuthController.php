@@ -3,31 +3,30 @@ declare(strict_types=1);
 
 class AuthController
 {
-    private UserRepository $userRepo;
-    private PasswordResetRepository $resetRepo;
-    private ActivationTokenRepository $activationRepo;
-    private OidcProviderRepository $oidcProviderRepo;
-
-    public function __construct(private mysqli $db)
-    {
-        $this->userRepo         = new UserRepository($db);
-        $this->resetRepo        = new PasswordResetRepository($db);
-        $this->activationRepo   = new ActivationTokenRepository($db);
-        $this->oidcProviderRepo = new OidcProviderRepository($db);
-    }
+    public function __construct(
+        private UserRepositoryInterface $userRepo,
+        private PasswordResetRepositoryInterface $resetRepo,
+        private ActivationTokenRepositoryInterface $activationRepo,
+        private OidcProviderRepositoryInterface $oidcProviderRepo,
+        private EventRepositoryInterface $eventRepo,
+        private OidcIdentityRepositoryInterface $oidcIdentityRepo,
+        private SessionInterface $session,
+        private ViewInterface $view,
+        private ResponseInterface $response,
+    ) {}
 
     public function showRegister(): void
     {
-        Session::requireGuest();
-        View::render('auth/register', ['pageTitle' => 'Registrieren', 'errors' => [], 'old' => []]);
+        $this->session->requireGuest();
+        $this->view->render('auth/register', ['pageTitle' => 'Registrieren', 'errors' => [], 'old' => []]);
     }
 
     public function register(Request $req): void
     {
-        Session::requireGuest();
+        $this->session->requireGuest();
 
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
         $name    = trim($req->post('name', ''));
@@ -65,7 +64,7 @@ class AuthController
         }
 
         if (!empty($errors)) {
-            View::render('auth/register', [
+            $this->view->render('auth/register', [
                 'pageTitle' => 'Registrieren',
                 'errors'    => $errors,
                 'old'       => ['name' => $name, 'email' => $email],
@@ -94,13 +93,13 @@ class AuthController
 
         mail($email, $subject, $body, $headers);
 
-        ControllerTools::redirect('/activation-sent');
+        $this->response->redirect('/activation-sent');
     }
 
     public function showActivationSent(): void
     {
-        Session::requireGuest();
-        View::render('auth/activation_sent', ['pageTitle' => 'Konto aktivieren']);
+        $this->session->requireGuest();
+        $this->view->render('auth/activation_sent', ['pageTitle' => 'Konto aktivieren']);
     }
 
     public function activateAccount(Request $req): void
@@ -109,35 +108,34 @@ class AuthController
         $record   = $rawToken !== '' ? $this->activationRepo->findValidByToken($rawToken) : null;
 
         if ($record === null) {
-            Session::setFlash('error', 'Dieser Aktivierungslink ist ungültig oder abgelaufen. Bitte registrieren Sie sich erneut.');
-            ControllerTools::redirect('/login');
+            $this->session->setFlash('error', 'Dieser Aktivierungslink ist ungültig oder abgelaufen. Bitte registrieren Sie sich erneut.');
+            $this->response->redirect('/login');
         }
 
         $this->userRepo->activate((int)$record['user_id']);
         $this->activationRepo->markUsed((int)$record['token_id']);
 
-        Session::setFlash('success', 'Konto aktiviert. Sie können sich jetzt anmelden.');
-        ControllerTools::redirect('/login');
+        $this->session->setFlash('success', 'Konto aktiviert. Sie können sich jetzt anmelden.');
+        $this->response->redirect('/login');
     }
 
     public function showLogin(): void
     {
-        Session::requireGuest();
-        $providerRepo = new OidcProviderRepository($this->db);
-        View::render('auth/login', [
-            'pageTitle'         => 'Anmelden', 
+        $this->session->requireGuest();
+        $this->view->render('auth/login', [
+            'pageTitle'         => 'Anmelden',
             'errors'            => [],
             'old'               => [],
-            'oidcProviderInfos' => $providerRepo->findAllActiveInfos()
+            'oidcProviderInfos' => $this->oidcProviderRepo->findAllActiveInfos()
         ]);
     }
 
     public function login(Request $req): void
     {
-        Session::requireGuest();
+        $this->session->requireGuest();
 
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
         $email  = trim($req->post('email', ''));
@@ -153,7 +151,7 @@ class AuthController
         }
 
         if (!empty($errors)) {
-            View::render('auth/login', [
+            $this->view->render('auth/login', [
                 'pageTitle' => 'Anmelden',
                 'errors'    => $errors,
                 'old'       => ['email' => $email],
@@ -161,20 +159,20 @@ class AuthController
             return;
         }
 
-        Session::login($user);
+        $this->session->login($user);
         $this->userRepo->updateLastLogin($user->userId);
-        ControllerTools::redirect('/events');
+        $this->response->redirect('/events');
     }
 
     public function showForgotPassword(): void
     {
-        View::render('auth/forgot_password', ['pageTitle' => 'Passwort vergessen']);
+        $this->view->render('auth/forgot_password', ['pageTitle' => 'Passwort vergessen']);
     }
 
     public function sendPasswordReset(Request $req): void
     {
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
         $email = trim($req->post('email', ''));
@@ -203,8 +201,8 @@ class AuthController
         }
 
         // Always show the same message to prevent user enumeration
-        Session::setFlash('success', 'Falls diese E-Mail-Adresse registriert ist, erhalten Sie in Kürze einen Link zum Zurücksetzen.');
-        ControllerTools::redirect('/forgot-password');
+        $this->session->setFlash('success', 'Falls diese E-Mail-Adresse registriert ist, erhalten Sie in Kürze einen Link zum Zurücksetzen.');
+        $this->response->redirect('/forgot-password');
     }
 
     public function showResetPassword(Request $req): void
@@ -213,11 +211,11 @@ class AuthController
         $record   = $rawToken !== '' ? $this->resetRepo->findValidByToken($rawToken) : null;
 
         if ($record === null) {
-            Session::setFlash('error', 'Dieser Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen an.');
-            ControllerTools::redirect('/forgot-password');
+            $this->session->setFlash('error', 'Dieser Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen an.');
+            $this->response->redirect('/forgot-password');
         }
 
-        View::render('auth/reset_password', [
+        $this->view->render('auth/reset_password', [
             'pageTitle' => 'Neues Passwort festlegen',
             'token'     => $rawToken,
             'errors'    => [],
@@ -226,16 +224,16 @@ class AuthController
 
     public function resetPassword(Request $req): void
     {
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
         $rawToken = $req->post('token', '');
         $record   = $rawToken !== '' ? $this->resetRepo->findValidByToken($rawToken) : null;
 
         if ($record === null) {
-            Session::setFlash('error', 'Dieser Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen an.');
-            ControllerTools::redirect('/forgot-password');
+            $this->session->setFlash('error', 'Dieser Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen an.');
+            $this->response->redirect('/forgot-password');
         }
 
         $newPwd  = $req->post('new_password', '');
@@ -255,7 +253,7 @@ class AuthController
         }
 
         if (!empty($errors)) {
-            View::render('auth/reset_password', [
+            $this->view->render('auth/reset_password', [
                 'pageTitle' => 'Neues Passwort festlegen',
                 'token'     => $rawToken,
                 'errors'    => $errors,
@@ -266,28 +264,28 @@ class AuthController
         $this->userRepo->updatePassword((int)$record['user_id'], password_hash($newPwd, PASSWORD_BCRYPT));
         $this->resetRepo->markUsed((int)$record['reset_id']);
 
-        Session::setFlash('success', 'Ihr Passwort wurde zurückgesetzt. Sie können sich jetzt anmelden.');
-        ControllerTools::redirect('/login');
+        $this->session->setFlash('success', 'Ihr Passwort wurde zurückgesetzt. Sie können sich jetzt anmelden.');
+        $this->response->redirect('/login');
     }
 
     public function showProfile(string $guid): void
     {
-        Session::requireLogin();
-        if ($guid !== Session::getUserGuid()) {
-            ControllerTools::abort_Forbidden_403();
+        $this->session->requireLogin();
+        if ($guid !== $this->session->getUserGuid()) {
+            $this->response->abort403();
         }
         $this->renderProfileEditPage($guid, [], []);
     }
 
     public function updateName(Request $req, string $guid): void
     {
-        Session::requireLogin();
-        if ($guid !== Session::getUserGuid()) {
-            ControllerTools::abort_Forbidden_403();
+        $this->session->requireLogin();
+        if ($guid !== $this->session->getUserGuid()) {
+            $this->response->abort403();
         }
 
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
         $name   = trim($req->post('name', ''));
@@ -304,21 +302,21 @@ class AuthController
             return;
         }
 
-        $this->userRepo->updateName(Session::getUserId(), $name);
-        Session::setUserName($name);
-        Session::setFlash('success', 'Anzeigename erfolgreich aktualisiert.');
-        ControllerTools::redirect('/profile/' . $guid);
+        $this->userRepo->updateName($this->session->getUserId(), $name);
+        $this->session->setUserName($name);
+        $this->session->setFlash('success', 'Anzeigename erfolgreich aktualisiert.');
+        $this->response->redirect('/profile/' . $guid);
     }
 
     public function updatePassword(Request $req, string $guid): void
     {
-        Session::requireLogin();
-        if ($guid !== Session::getUserGuid()) {
-            ControllerTools::abort_Forbidden_403();
+        $this->session->requireLogin();
+        if ($guid !== $this->session->getUserGuid()) {
+            $this->response->abort403();
         }
 
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
         $currentPwd = $req->post('current_password', '');
@@ -329,7 +327,7 @@ class AuthController
         $user = $this->userRepo->findByGuid($guid);
 
         if ($user->userPasswd === null) {
-            ControllerTools::abort_Forbidden_403();
+            $this->response->abort403();
         }
 
         if (!password_verify($currentPwd, $user->userPasswd)) {
@@ -353,20 +351,20 @@ class AuthController
             return;
         }
 
-        $this->userRepo->updatePassword(Session::getUserId(), password_hash($newPwd, PASSWORD_BCRYPT));
-        Session::setFlash('success', 'Passwort erfolgreich geändert.');
-        ControllerTools::redirect('/profile/' . $guid);
+        $this->userRepo->updatePassword($this->session->getUserId(), password_hash($newPwd, PASSWORD_BCRYPT));
+        $this->session->setFlash('success', 'Passwort erfolgreich geändert.');
+        $this->response->redirect('/profile/' . $guid);
     }
 
     public function showAdminUsers(): void
     {
-        Session::requireLogin();
-        if (!Session::isAdmin()) {
-            ControllerTools::abort_Forbidden_403();
+        $this->session->requireLogin();
+        if (!$this->session->isAdmin()) {
+            $this->response->abort403();
         }
         $users      = $this->userRepo->findAll();
         $adminCount = $this->userRepo->countAdmins();
-        View::render('admin/users', [
+        $this->view->render('admin/users', [
             'pageTitle'  => 'Benutzerverwaltung',
             'users'      => $users,
             'adminCount' => $adminCount,
@@ -375,98 +373,98 @@ class AuthController
 
     public function toggleAdminRole(Request $req, string $guid): void
     {
-        Session::requireLogin();
-        if (!Session::isAdmin()) {
-            ControllerTools::abort_Forbidden_403();
+        $this->session->requireLogin();
+        if (!$this->session->isAdmin()) {
+            $this->response->abort403();
         }
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
         $user = $this->userRepo->findByGuid($guid);
         if ($user === null) {
-            ControllerTools::abort_NotFound_404();
+            $this->response->abort404();
         }
 
         if ($user->userRole >= 1) {
-            if ($user->userId === Session::getUserId()) {
-                Session::setFlash('error', 'Sie können sich selbst die Administrator-Rechte nicht entziehen.');
-                ControllerTools::redirect('/admin/users');
+            if ($user->userId === $this->session->getUserId()) {
+                $this->session->setFlash('error', 'Sie können sich selbst die Administrator-Rechte nicht entziehen.');
+                $this->response->redirect('/admin/users');
             }
             if ($this->userRepo->countAdmins() <= 1) {
-                Session::setFlash('error', 'Es muss mindestens ein Administrator vorhanden sein.');
-                ControllerTools::redirect('/admin/users');
+                $this->session->setFlash('error', 'Es muss mindestens ein Administrator vorhanden sein.');
+                $this->response->redirect('/admin/users');
             }
             $this->userRepo->setRole($user->userId, 0);
-            Session::setFlash('success', 'Administrator-Rechte von ' . $user->userName . ' wurden entzogen.');
+            $this->session->setFlash('success', 'Administrator-Rechte von ' . $user->userName . ' wurden entzogen.');
         } else {
             if (!$user->userIsActive) {
-                Session::setFlash('error', 'Einem inaktiven Benutzer können keine Administrator-Rechte vergeben werden.');
-                ControllerTools::redirect('/admin/users');
+                $this->session->setFlash('error', 'Einem inaktiven Benutzer können keine Administrator-Rechte vergeben werden.');
+                $this->response->redirect('/admin/users');
             }
             $this->userRepo->setRole($user->userId, 1);
-            Session::setFlash('success', $user->userName . ' wurde zum Administrator ernannt.');
+            $this->session->setFlash('success', $user->userName . ' wurde zum Administrator ernannt.');
         }
 
-        ControllerTools::redirect('/admin/users');
+        $this->response->redirect('/admin/users');
     }
 
     public function toggleActive(Request $req, string $guid): void
     {
-        Session::requireLogin();
-        if (!Session::isAdmin()) {
-            ControllerTools::abort_Forbidden_403();
+        $this->session->requireLogin();
+        if (!$this->session->isAdmin()) {
+            $this->response->abort403();
         }
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
         $user = $this->userRepo->findByGuid($guid);
         if ($user === null) {
-            ControllerTools::abort_NotFound_404();
+            $this->response->abort404();
         }
 
         if ($user->userIsActive) {
-            if ($user->userId === Session::getUserId()) {
-                Session::setFlash('error', 'Sie können sich selbst nicht deaktivieren.');
-                ControllerTools::redirect('/admin/users');
+            if ($user->userId === $this->session->getUserId()) {
+                $this->session->setFlash('error', 'Sie können sich selbst nicht deaktivieren.');
+                $this->response->redirect('/admin/users');
                 return;
             }
             if ($user->userRole >= 1 && $this->userRepo->countAdmins() <= 1) {
-                Session::setFlash('error', 'Der einzige Administrator kann nicht deaktiviert werden.');
-                ControllerTools::redirect('/admin/users');
+                $this->session->setFlash('error', 'Der einzige Administrator kann nicht deaktiviert werden.');
+                $this->response->redirect('/admin/users');
                 return;
             }
             $this->userRepo->setActive($user->userId, false);
-            Session::setFlash('success', $user->userName . ' wurde deaktiviert.');
+            $this->session->setFlash('success', $user->userName . ' wurde deaktiviert.');
         } else {
             if ($user->userIsNew) {
-                Session::setFlash('error', 'Neue Benutzer müssen sich über den Aktivierungslink aktivieren.');
-                ControllerTools::redirect('/admin/users');
+                $this->session->setFlash('error', 'Neue Benutzer müssen sich über den Aktivierungslink aktivieren.');
+                $this->response->redirect('/admin/users');
                 return;
             }
             $this->userRepo->setActive($user->userId, true);
-            Session::setFlash('success', $user->userName . ' wurde reaktiviert.');
+            $this->session->setFlash('success', $user->userName . ' wurde reaktiviert.');
         }
 
-        ControllerTools::redirect('/admin/users');
+        $this->response->redirect('/admin/users');
     }
 
     public function showDeleteProfile(string $guid): void
     {
-        Session::requireLogin();
-        if ($guid !== Session::getUserGuid()) {
-            ControllerTools::abort_Forbidden_403();
+        $this->session->requireLogin();
+        if ($guid !== $this->session->getUserGuid()) {
+            $this->response->abort403();
         }
         $user = $this->userRepo->findByGuid($guid);
         if ($user->userRole >= 1
             && $this->userRepo->countAdmins() === 1
             && $this->userRepo->countAll() > 1
         ) {
-            Session::setFlash('error', 'Ihr Konto kann nicht gelöscht werden, solange Sie der einzige Administrator sind. Ernennen Sie zuerst einen anderen Administrator.');
-            ControllerTools::redirect('/profile/' . $guid);
+            $this->session->setFlash('error', 'Ihr Konto kann nicht gelöscht werden, solange Sie der einzige Administrator sind. Ernennen Sie zuerst einen anderen Administrator.');
+            $this->response->redirect('/profile/' . $guid);
         }
-        View::render('profile/confirm_delete', [
+        $this->view->render('profile/confirm_delete', [
             'pageTitle' => 'Profil löschen',
             'user'      => $user,
             'errors'    => [],
@@ -476,13 +474,13 @@ class AuthController
 
     public function deleteProfile(Request $req, string $guid): void
     {
-        Session::requireLogin();
-        if ($guid !== Session::getUserGuid()) {
-            ControllerTools::abort_Forbidden_403();
+        $this->session->requireLogin();
+        if ($guid !== $this->session->getUserGuid()) {
+            $this->response->abort403();
         }
 
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
         $user     = $this->userRepo->findByGuid($guid);
@@ -493,8 +491,8 @@ class AuthController
             && $this->userRepo->countAdmins() === 1
             && $this->userRepo->countAll() > 1
         ) {
-            Session::setFlash('error', 'Ihr Konto kann nicht gelöscht werden, solange Sie der einzige Administrator sind. Ernennen Sie zuerst einen anderen Administrator.');
-            ControllerTools::redirect('/profile/' . $guid);
+            $this->session->setFlash('error', 'Ihr Konto kann nicht gelöscht werden, solange Sie der einzige Administrator sind. Ernennen Sie zuerst einen anderen Administrator.');
+            $this->response->redirect('/profile/' . $guid);
         }
 
         if ($user->userPasswd !== null && !password_verify($password, $user->userPasswd)) {
@@ -502,7 +500,7 @@ class AuthController
         }
 
         if (!empty($errors)) {
-            View::render('profile/confirm_delete', [
+            $this->view->render('profile/confirm_delete', [
                 'pageTitle' => 'Profil löschen',
                 'user'      => $user,
                 'errors'    => $errors,
@@ -511,31 +509,29 @@ class AuthController
             return;
         }
 
-        $eventRepo        = new EventRepository($this->db);
-        $oidcIdentityRepo = new OidcIdentityRepository($this->db);
-        $eventRepo->deleteSubscribersForUserEvents($user->userId);
-        $eventRepo->deleteSubscribersByCreator($user->userId);
-        $eventRepo->deleteAllByUser($user->userId);
+        $this->eventRepo->deleteSubscribersForUserEvents($user->userId);
+        $this->eventRepo->deleteSubscribersByCreator($user->userId);
+        $this->eventRepo->deleteAllByUser($user->userId);
         $this->resetRepo->deleteByUser($user->userId);
         $this->activationRepo->deleteByUser($user->userId);
-        $oidcIdentityRepo->deleteByUser($user->userId);
+        $this->oidcIdentityRepo->deleteByUser($user->userId);
         $this->userRepo->delete($user->userId);
 
-        Session::logout();
-        Session::setFlash('success', 'Ihr Profil wurde gelöscht.');
-        ControllerTools::redirect('/login');
+        $this->session->logout();
+        $this->session->setFlash('success', 'Ihr Profil wurde gelöscht.');
+        $this->response->redirect('/login');
     }
 
     public function logout(): void
     {
-        Session::requireLogin();
+        $this->session->requireLogin();
 
-        if (!Session::validateCsrf($_POST['_csrf'] ?? '')) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($_POST['_csrf'] ?? '')) {
+            $this->response->abort403();
         }
 
-        Session::logout();
-        ControllerTools::redirect('/login');
+        $this->session->logout();
+        $this->response->redirect('/login');
     }
 
     private function getNoReplyAddress(): string
@@ -543,18 +539,16 @@ class AuthController
         return APP_CONFIG->getAppTitleShort() . ' <noreply@' . $_SERVER['HTTP_HOST'] . '>';
     }
 
-    private function renderProfileEditPage($userGuid, $nameErrors, $pwdErrors): void
+    private function renderProfileEditPage(string $userGuid, array $nameErrors, array $pwdErrors): void
     {
-        $user             = $this->userRepo->findByGuid($userGuid);
-        $providerRepo     = new OidcProviderRepository($this->db);
-        $identityRepo     = new OidcIdentityRepository($this->db);
-        View::render('profile/edit', [
+        $user = $this->userRepo->findByGuid($userGuid);
+        $this->view->render('profile/edit', [
             'pageTitle'         => 'Profil',
             'user'              => $user,
             'nameErrors'        => $nameErrors,
             'pwdErrors'         => $pwdErrors,
-            'linkedIdentities'  => $identityRepo->findByUserId($user->userId),
-            'oidcProviderInfos' => $providerRepo->findAllActiveInfos(),
+            'linkedIdentities'  => $this->oidcIdentityRepo->findByUserId($user->userId),
+            'oidcProviderInfos' => $this->oidcProviderRepo->findAllActiveInfos(),
         ]);
     }
 }

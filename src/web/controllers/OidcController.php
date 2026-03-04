@@ -3,16 +3,14 @@ declare(strict_types=1);
 
 class OidcController
 {
-    private UserRepository         $userRepo;
-    private OidcIdentityRepository $identityRepo;
-    private OidcProviderRepository $providerRepo;
-
-    public function __construct(private mysqli $db)
-    {
-        $this->userRepo     = new UserRepository($db);
-        $this->identityRepo = new OidcIdentityRepository($db);
-        $this->providerRepo = new OidcProviderRepository($db);
-    }
+    public function __construct(
+        private UserRepositoryInterface $userRepo,
+        private OidcIdentityRepositoryInterface $identityRepo,
+        private OidcProviderRepositoryInterface $providerRepo,
+        private SessionInterface $session,
+        private ViewInterface $view,
+        private ResponseInterface $response,
+    ) {}
 
     // -------------------------------------------------------------------------
     // GET /auth/oidc/{providerKey}/login  — start login flow (guest only)
@@ -22,9 +20,9 @@ class OidcController
     public function redirect(string $providerKey, string $mode): void
     {
         if ($mode === 'link') {
-            Session::requireLogin();
+            $this->session->requireLogin();
         } else {
-            Session::requireGuest();
+            $this->session->requireGuest();
         }
 
         $provider  = $this->getProvider($providerKey);
@@ -33,10 +31,10 @@ class OidcController
         $nonce = bin2hex(random_bytes(16));
         $state = bin2hex(random_bytes(16));
 
-        Session::setOidcPending($nonce, $state, $providerKey);
+        $this->session->setOidcPending($nonce, $state, $providerKey);
 
         if ($mode === 'link') {
-            Session::setOidcLinkUserId(Session::getUserId());
+            $this->session->setOidcLinkUserId($this->session->getUserId());
         }
 
         $params = http_build_query([
@@ -48,7 +46,7 @@ class OidcController
             'nonce'         => $nonce,
         ]);
 
-        ControllerTools::redirect($discovery['authorization_endpoint'] . '?' . $params);
+        $this->response->redirect($discovery['authorization_endpoint'] . '?' . $params);
     }
 
     // -------------------------------------------------------------------------
@@ -58,32 +56,32 @@ class OidcController
     {
         // --- 1. Validate state ---
         $returnedState = $req->get('state', '');
-        $storedState   = Session::getOidcState();
+        $storedState   = $this->session->getOidcState();
         if ($storedState === '' || !hash_equals($storedState, $returnedState)) {
-            Session::setFlash('error', 'Ungültige Sitzung. Bitte versuchen Sie es erneut.');
-            ControllerTools::redirect('/login');
+            $this->session->setFlash('error', 'Ungültige Sitzung. Bitte versuchen Sie es erneut.');
+            $this->response->redirect('/login');
         }
 
         // --- 2. Handle provider-side errors ---
         $error = $req->get('error', '');
         if ($error !== '') {
-            Session::clearOidcData();
-            Session::setFlash('error', 'Anmeldung abgebrochen.');
-            ControllerTools::redirect('/login');
+            $this->session->clearOidcData();
+            $this->session->setFlash('error', 'Anmeldung abgebrochen.');
+            $this->response->redirect('/login');
         }
 
         // --- 3. Confirm provider matches ---
-        if (Session::getOidcProvider() !== $providerKey) {
-            Session::clearOidcData();
-            Session::setFlash('error', 'Anbieter-Konflikt. Bitte erneut versuchen.');
-            ControllerTools::redirect('/login');
+        if ($this->session->getOidcProvider() !== $providerKey) {
+            $this->session->clearOidcData();
+            $this->session->setFlash('error', 'Anbieter-Konflikt. Bitte erneut versuchen.');
+            $this->response->redirect('/login');
         }
 
         $code = $req->get('code', '');
         if ($code === '') {
-            Session::clearOidcData();
-            Session::setFlash('error', 'Kein Autorisierungscode erhalten.');
-            ControllerTools::redirect('/login');
+            $this->session->clearOidcData();
+            $this->session->setFlash('error', 'Kein Autorisierungscode erhalten.');
+            $this->response->redirect('/login');
         }
 
         // --- 4. Exchange code for tokens ---
@@ -92,9 +90,9 @@ class OidcController
         $tokenResponse = $this->exchangeCode($discovery['token_endpoint'], $code, $provider);
 
         if (!isset($tokenResponse['id_token'])) {
-            Session::clearOidcData();
-            Session::setFlash('error', 'Kein ID-Token vom Anbieter erhalten.');
-            ControllerTools::redirect('/login');
+            $this->session->clearOidcData();
+            $this->session->setFlash('error', 'Kein ID-Token vom Anbieter erhalten.');
+            $this->response->redirect('/login');
         }
 
         // --- 5. Decode and validate ID token ---
@@ -102,13 +100,13 @@ class OidcController
             $tokenResponse['id_token'],
             $provider,
             $discovery['issuer'],
-            Session::getOidcNonce()
+            $this->session->getOidcNonce()
         );
 
         if ($claims === null) {
-            Session::clearOidcData();
-            Session::setFlash('error', 'ID-Token ungültig oder abgelaufen.');
-            ControllerTools::redirect('/login');
+            $this->session->clearOidcData();
+            $this->session->setFlash('error', 'ID-Token ungültig oder abgelaufen.');
+            $this->response->redirect('/login');
         }
 
         // --- 6. Extract claims ---
@@ -117,41 +115,41 @@ class OidcController
         $name  = trim((string)($claims['name'] ?? ($claims['given_name'] ?? '')));
 
         if ($sub === '' || $email === '') {
-            Session::clearOidcData();
-            Session::setFlash('error', 'Der Anbieter hat keine E-Mail-Adresse oder Benutzer-ID zurückgegeben.');
-            ControllerTools::redirect('/login');
+            $this->session->clearOidcData();
+            $this->session->setFlash('error', 'Der Anbieter hat keine E-Mail-Adresse oder Benutzer-ID zurückgegeben.');
+            $this->response->redirect('/login');
         }
 
         // --- 7. Determine mode ---
-        $linkUserId = Session::getOidcLinkUserId();
-        Session::clearOidcData();
+        $linkUserId = $this->session->getOidcLinkUserId();
+        $this->session->clearOidcData();
 
         if ($linkUserId !== null) {
             // Link mode: add identity to the already-logged-in user
             $existing = $this->identityRepo->findByProviderSub($provider->providerId, $sub);
             if ($existing !== null && $existing->userId !== $linkUserId) {
-                Session::setFlash('error', 'Dieser Anbieter-Account ist bereits mit einem anderen Konto verknüpft.');
+                $this->session->setFlash('error', 'Dieser Anbieter-Account ist bereits mit einem anderen Konto verknüpft.');
             } elseif ($existing === null) {
                 $this->identityRepo->create($linkUserId, $provider->providerId, $sub);
-                Session::setFlash('success', 'Anbieter erfolgreich verknüpft.');
+                $this->session->setFlash('success', 'Anbieter erfolgreich verknüpft.');
             } else {
-                Session::setFlash('success', 'Anbieter ist bereits verknüpft.');
+                $this->session->setFlash('success', 'Anbieter ist bereits verknüpft.');
             }
-            $guid = Session::getUserGuid();
-            ControllerTools::redirect('/profile/' . $guid);
+            $guid = $this->session->getUserGuid();
+            $this->response->redirect('/profile/' . $guid);
         }
 
         // Login mode
         $user = $this->findOrProvisionUser($provider->providerId, $sub, $email, $name);
 
         if ($user === null) {
-            Session::setFlash('error', 'Konto konnte nicht erstellt oder gefunden werden.');
-            ControllerTools::redirect('/login');
+            $this->session->setFlash('error', 'Konto konnte nicht erstellt oder gefunden werden.');
+            $this->response->redirect('/login');
         }
 
-        Session::login($user);
+        $this->session->login($user);
         $this->userRepo->updateLastLogin($user->userId);
-        ControllerTools::redirect('/events');
+        $this->response->redirect('/events');
     }
 
     // -------------------------------------------------------------------------
@@ -159,28 +157,28 @@ class OidcController
     // -------------------------------------------------------------------------
     public function unlinkIdentity(Request $req, string $guid, int $identityId): void
     {
-        Session::requireLogin();
-        if ($guid !== Session::getUserGuid()) {
-            ControllerTools::abort_Forbidden_403();
+        $this->session->requireLogin();
+        if ($guid !== $this->session->getUserGuid()) {
+            $this->response->abort403();
         }
-        if (!Session::validateCsrf($req->post('_csrf', ''))) {
-            ControllerTools::abort_Forbidden_403();
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
         }
 
-        $userId = (int)Session::getUserId();
+        $userId = (int)$this->session->getUserId();
         $user   = $this->userRepo->findById($userId);
 
         $linkedCount = $this->identityRepo->countByUser($userId);
         $hasPassword = ($user->userPasswd !== null);
 
         if (!$hasPassword && $linkedCount <= 1) {
-            Session::setFlash('error', 'Sie können die letzte Anmeldemethode nicht entfernen.');
-            ControllerTools::redirect('/profile/' . $guid);
+            $this->session->setFlash('error', 'Sie können die letzte Anmeldemethode nicht entfernen.');
+            $this->response->redirect('/profile/' . $guid);
         }
 
         $this->identityRepo->deleteById($identityId, $userId);
-        Session::setFlash('success', 'Anbieter-Verknüpfung wurde aufgehoben.');
-        ControllerTools::redirect('/profile/' . $guid);
+        $this->session->setFlash('success', 'Anbieter-Verknüpfung wurde aufgehoben.');
+        $this->response->redirect('/profile/' . $guid);
     }
 
     // -------------------------------------------------------------------------
@@ -191,7 +189,7 @@ class OidcController
     {
         $provider = $this->providerRepo->findByKey($providerKey);
         if ($provider === null) {
-            ControllerTools::abort_NotFound_404();
+            $this->response->abort404();
         }
         return $provider;
     }
@@ -210,16 +208,16 @@ class OidcController
         $body = @file_get_contents($url, false, $context);
         if ($body === false) {
             error_log('OIDC: failed to fetch discovery from ' . $url);
-            Session::setFlash('error', 'Anmeldeanbieter nicht erreichbar. Bitte versuchen Sie es später erneut.');
-            ControllerTools::redirect('/login');
+            $this->session->setFlash('error', 'Anmeldeanbieter nicht erreichbar. Bitte versuchen Sie es später erneut.');
+            $this->response->redirect('/login');
         }
 
         $doc = json_decode($body, true);
         if (!is_array($doc)
             || !isset($doc['authorization_endpoint'], $doc['token_endpoint'], $doc['issuer'])
         ) {
-            Session::setFlash('error', 'Ungültiges Konfigurationsdokument des Anbieters.');
-            ControllerTools::redirect('/login');
+            $this->session->setFlash('error', 'Ungültiges Konfigurationsdokument des Anbieters.');
+            $this->response->redirect('/login');
         }
 
         return $doc;
@@ -248,8 +246,8 @@ class OidcController
         $raw = @file_get_contents($tokenEndpoint, false, $context);
         if ($raw === false) {
             error_log('OIDC: token endpoint unreachable: ' . $tokenEndpoint);
-            Session::setFlash('error', 'Token-Austausch fehlgeschlagen. Bitte erneut versuchen.');
-            ControllerTools::redirect('/login');
+            $this->session->setFlash('error', 'Token-Austausch fehlgeschlagen. Bitte erneut versuchen.');
+            $this->response->redirect('/login');
         }
 
         $result = json_decode($raw, true);
@@ -346,6 +344,4 @@ class OidcController
 
         return $this->userRepo->findById($newUserId);
     }
-
-
 }

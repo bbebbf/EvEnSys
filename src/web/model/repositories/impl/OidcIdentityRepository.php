@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-class OidcIdentityRepository
+class OidcIdentityRepository implements OidcIdentityRepositoryInterface
 {
     public function __construct(private mysqli $db) {}
 
