@@ -7,4 +7,9 @@ class AppView implements ViewInterface
     {
         View::render($template, $data, $statusCode);
     }
+
+    public function renderStandalone(string $template, array $data = [], int $statusCode = 200): void
+    {
+        View::renderStandalone($template, $data, $statusCode);
+    }
 }

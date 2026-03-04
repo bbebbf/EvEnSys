@@ -10,6 +10,12 @@ class EventController
         private ResponseInterface $response,
     ) {}
 
+    public function kiosk(): void
+    {
+        $events = $this->eventRepo->findAllUpcoming(true);
+        $this->view->renderStandalone('event/kiosk', ['events' => $events]);
+    }
+
     public function home(): void
     {
         if ($this->session->isLoggedIn()) {

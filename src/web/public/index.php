@@ -89,6 +89,7 @@ $oidcController  = new OidcController($userRepo, $oidcIdentityRepo, $oidcProvide
 
 // --- Routes ---
 $router->get('/',                      fn() => $eventController->home());
+$router->get('/kiosk',                 fn() => $eventController->kiosk());
 $router->get('/events',                fn() => $eventController->index());
 $router->get('/events/all',            fn() => $eventController->indexAll());
 $router->get('/events/my',             fn() => $eventController->indexMy());
