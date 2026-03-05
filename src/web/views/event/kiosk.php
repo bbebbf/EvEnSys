@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= html_out(APP_CONFIG->getAppTitleLong()) ?></title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -63,11 +65,6 @@
     .slide.exit {
       opacity: 0;
       transform: translateX(-60px);
-    }
-
-    .slide-inner {
-      max-width: 860px;
-      width: 100%;
     }
 
     /* Date badge */
@@ -129,6 +126,37 @@
       font-size: 1rem;
     }
 
+    /* QR code */
+    .slide-inner {
+      max-width: 960px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 3rem;
+    }
+    .slide-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .event-qr-wrap {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .event-qr-wrap canvas,
+    .event-qr-wrap img {
+      border-radius: 0.5rem;
+      display: block;
+    }
+    .event-qr-label {
+      font-size: 0.75rem;
+      color: #484f58;
+      text-align: center;
+      white-space: nowrap;
+    }
+
     /* Empty state */
     .kiosk-empty {
       position: absolute;
@@ -182,6 +210,11 @@
 
 <div class="kiosk-stage" id="stage">
 
+  <?php
+    $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+    $baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];
+  ?>
+
   <?php if (empty($events)): ?>
     <div class="kiosk-empty">
       <i class="bi bi-calendar-x"></i>
@@ -189,32 +222,39 @@
     </div>
   <?php else: ?>
     <?php foreach ($events as $i => $event): ?>
-      <div class="slide<?= $i === 0 ? ' active' : '' ?>" data-index="<?= $i ?>">
+      <?php $eventUrl = $baseUrl . '/events/' . $event->eventGuid; ?>
+      <div class="slide<?= $i === 0 ? ' active' : '' ?>" data-index="<?= $i ?>" data-event-url="<?= html_out($eventUrl) ?>">
         <div class="slide-inner">
 
-          <div class="event-date-badge">
-            <i class="bi bi-calendar-event"></i>
-            <?= html_out($event->eventDate->format('d.m.Y')) ?>
-            &nbsp;&bull;&nbsp;
-            <?= html_out($event->eventDate->format('H:i')) ?> Uhr
+          <div class="slide-content">
+            <div class="event-date-badge">
+              <i class="bi bi-calendar-event"></i>
+              <?= html_out($event->eventDate->format('d.m.Y')) ?>
+              &nbsp;&bull;&nbsp;
+              <?= html_out($event->eventDate->format('H:i')) ?> Uhr
+            </div>
+
+            <div class="event-title"><?= html_out($event->eventTitle) ?></div>
+
+            <?php if ($event->eventDescription !== null): ?>
+              <div class="event-description"><?= html_out($event->eventDescription) ?></div>
+            <?php endif; ?>
+
+            <div class="event-meta">
+              <?php if ($event->eventLocation !== null): ?>
+                <span class="meta-pill"><i class="bi bi-geo-alt"></i><?= html_out($event->eventLocation) ?></span>
+              <?php endif; ?>
+              <?php if ($event->eventDurationHours !== null): ?>
+                <span class="meta-pill"><i class="bi bi-clock"></i><?= html_out($event->eventDurationHours) ?> Std.</span>
+              <?php endif; ?>
+              <?php if ($event->eventMaxSubscriber !== null): ?>
+                <span class="meta-pill"><i class="bi bi-people"></i>Max. <?= html_out($event->eventMaxSubscriber) ?> Teilnehmer</span>
+              <?php endif; ?>
+            </div>
           </div>
 
-          <div class="event-title"><?= html_out($event->eventTitle) ?></div>
-
-          <?php if ($event->eventDescription !== null): ?>
-            <div class="event-description"><?= html_out($event->eventDescription) ?></div>
-          <?php endif; ?>
-
-          <div class="event-meta">
-            <?php if ($event->eventLocation !== null): ?>
-              <span class="meta-pill"><i class="bi bi-geo-alt"></i><?= html_out($event->eventLocation) ?></span>
-            <?php endif; ?>
-            <?php if ($event->eventDurationHours !== null): ?>
-              <span class="meta-pill"><i class="bi bi-clock"></i><?= html_out($event->eventDurationHours) ?> Std.</span>
-            <?php endif; ?>
-            <?php if ($event->eventMaxSubscriber !== null): ?>
-              <span class="meta-pill"><i class="bi bi-people"></i>Max. <?= html_out($event->eventMaxSubscriber) ?> Teilnehmer</span>
-            <?php endif; ?>
+          <div class="event-qr-wrap">
+            <div class="event-qr" id="qr-<?= $i ?>"></div>
           </div>
 
         </div>
@@ -232,6 +272,22 @@
 <?php endif; ?>
 
 <script>
+(function () {
+  document.querySelectorAll('.slide[data-event-url]').forEach(function (slide, i) {
+    var url = slide.dataset.eventUrl;
+    var container = document.getElementById('qr-' + i);
+    if (!container || !url) return;
+    new QRCode(container, {
+      text: url,
+      width: 220,
+      height: 220,
+      colorDark: '#c9d1d9',
+      colorLight: '#0d1117',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  });
+})();
+
 (function () {
   const SLIDE_DURATION = <?= APP_CONFIG->getKioskSlideDurationMs() ?>;
 
