@@ -56,6 +56,11 @@ class AppConfig
         return $currentDatetime;
     }
 
+    public function getTimezone(): string
+    {
+        return $this->get_str_value('Timezone', 'Europe/Berlin');
+    }
+
     private function get_str_value(string $key, string $default = ''): string
     {
         if (is_array($this->config) && array_key_exists($key, $this->config)) {

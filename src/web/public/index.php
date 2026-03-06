@@ -64,6 +64,8 @@ $_appConfig = new AppConfig();
 define('APP_CONFIG', $_appConfig);
 unset($_appConfig);
 
+date_default_timezone_set(APP_CONFIG->getTimezone());
+
 // Connect to DB and initialize router
 $db  = db_connect();
 $req = new Request();
