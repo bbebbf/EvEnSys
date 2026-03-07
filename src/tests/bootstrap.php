@@ -38,6 +38,7 @@ require $srcRoot . '/core/Request.php';
 require $srcRoot . '/controllers/ControllerTools.php';
 require $srcRoot . '/controllers/AuthController.php';
 require $srcRoot . '/controllers/EventController.php';
+require $srcRoot . '/controllers/OidcUserProvisioner.php';
 require $srcRoot . '/controllers/OidcController.php';
 
 // Test fakes

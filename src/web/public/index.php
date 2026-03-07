@@ -55,6 +55,7 @@ require APP_ROOT . '/model/repositories/impl/OidcProviderRepository.php';
 require APP_ROOT . '/controllers/ControllerTools.php';
 require APP_ROOT . '/controllers/AuthController.php';
 require APP_ROOT . '/controllers/EventController.php';
+require APP_ROOT . '/controllers/OidcUserProvisioner.php';
 require APP_ROOT . '/controllers/OidcController.php';
 
 Session::start();
@@ -87,7 +88,8 @@ $response = new AppResponse();
 // Instantiate controllers
 $authController  = new AuthController($userRepo, $resetRepo, $activationRepo, $oidcProviderRepo, $eventRepo, $oidcIdentityRepo, $session, $view, $response);
 $eventController = new EventController($eventRepo, $session, $view, $response);
-$oidcController  = new OidcController($userRepo, $oidcIdentityRepo, $oidcProviderRepo, $session, $view, $response);
+$oidcProvisioner = new OidcUserProvisioner($userRepo, $oidcIdentityRepo);
+$oidcController  = new OidcController($userRepo, $oidcIdentityRepo, $oidcProviderRepo, $oidcProvisioner, $session, $view, $response);
 
 // --- Routes ---
 $router->get('/',                      fn() => $eventController->home());

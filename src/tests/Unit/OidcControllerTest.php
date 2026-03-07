@@ -14,6 +14,7 @@ class OidcControllerTest extends TestCase
     private MockObject       $userRepo;
     private MockObject       $identityRepo;
     private MockObject       $providerRepo;
+    private MockObject       $provisioner;
     private MockObject       $session;
     private MockObject       $view;
     private FakeResponse     $response;
@@ -24,6 +25,7 @@ class OidcControllerTest extends TestCase
         $this->userRepo     = $this->createMock(\UserRepositoryInterface::class);
         $this->identityRepo = $this->createMock(\OidcIdentityRepositoryInterface::class);
         $this->providerRepo = $this->createMock(\OidcProviderRepositoryInterface::class);
+        $this->provisioner  = $this->createMock(\OidcUserProvisioner::class);
         $this->session      = $this->createMock(\SessionInterface::class);
         $this->view         = $this->createMock(\ViewInterface::class);
         $this->response     = new FakeResponse();
@@ -32,6 +34,7 @@ class OidcControllerTest extends TestCase
             $this->userRepo,
             $this->identityRepo,
             $this->providerRepo,
+            $this->provisioner,
             $this->session,
             $this->view,
             $this->response,

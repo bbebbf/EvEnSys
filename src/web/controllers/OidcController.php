@@ -7,6 +7,7 @@ class OidcController
         private UserRepositoryInterface $userRepo,
         private OidcIdentityRepositoryInterface $identityRepo,
         private OidcProviderRepositoryInterface $providerRepo,
+        private OidcUserProvisioner $provisioner,
         private SessionInterface $session,
         private ViewInterface $view,
         private ResponseInterface $response,
@@ -140,7 +141,7 @@ class OidcController
         }
 
         // Login mode
-        $user = $this->findOrProvisionUser($provider->providerId, $sub, $email, $name);
+        $user = $this->provisioner->findOrProvision($provider->providerId, $sub, $email, $name);
 
         if ($user === null) {
             $this->session->setFlash('error', 'Konto konnte nicht erstellt oder gefunden werden.');
@@ -311,37 +312,5 @@ class OidcController
         return $payload;
     }
 
-    /**
-     * 1. Known OIDC identity  → return existing user
-     * 2. Email matches user   → link + remove local password + (auto-activate if inactive) + return user
-     * 3. New user             → create + link + activate + return user
-     */
-    private function findOrProvisionUser(
-        int    $providerId,
-        string $sub,
-        string $email,
-        string $name
-    ): ?UserDto {
-        $identity = $this->identityRepo->findByProviderSub($providerId, $sub);
-        if ($identity !== null) {
-            return $this->userRepo->findById($identity->userId);
-        }
-
-        $existing = $this->userRepo->findByEmail($email);
-        if ($existing !== null) {
-            $this->identityRepo->create($existing->userId, $providerId, $sub);
-            $this->userRepo->removePassword($existing->userId);
-            if (!$existing->userIsActive) {
-                $this->userRepo->activate($existing->userId);
-            }
-            return $this->userRepo->findById($existing->userId);
-        }
-
-        $displayName = $name !== '' ? $name : explode('@', $email)[0];
-        $newUserId   = $this->userRepo->createOidc($displayName, $email);
-        $this->identityRepo->create($newUserId, $providerId, $sub);
-        $this->userRepo->activate($newUserId);
-
-        return $this->userRepo->findById($newUserId);
-    }
 }
+
