@@ -1,10 +1,11 @@
 {
     "Timezone": "Europe/Berlin",
-    "AppTitleShort": "WdB26",
-    "AppTitleLong": "Wochen der Begegnung 2026",
-    "AppImpressUrl": "https://www.gemeinschaft-filsum.de/impressum",
+    "AppTitleShort": "",
+    "AppTitleLong": "",
+    "AppImpressUrl": "",
     "KioskSlideDurationSec": 15,
     "DelayedStartMinutes": 15,
-    "EventDateRangeFrom": "2026-03-01T13:00",
-    "EventDateRangeTo": "2026-06-30T18:00"
+    "EventDateRangeFrom": "",
+    "EventDateRangeTo": ""
 }
+ 
