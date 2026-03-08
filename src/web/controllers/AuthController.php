@@ -180,7 +180,7 @@ class AuthController
             ? $this->userRepo->findByEmail($email)
             : null;
 
-        if ($user !== null && $user->userIsActive) {
+        if ($user !== null && $user->userIsActive && $user->userPasswd !== null) {
             $rawToken = $this->resetRepo->createToken($user->userId);
 
             $scheme  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
