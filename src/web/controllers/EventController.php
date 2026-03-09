@@ -159,10 +159,11 @@ class EventController
             $this->response->abort403();
         }
 
-        $event  = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
-        $userId = $this->session->getUserId();
+        $event   = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
+        $userId  = $this->session->getUserId();
+        $isAdmin = $this->session->isAdmin();
 
-        if (!$this->eventRepo->deleteSubscriber($subscriberGuid, $userId)) {
+        if (!$this->eventRepo->deleteSubscriber($subscriberGuid, $userId, $isAdmin)) {
             $this->session->setFlash('error', 'Anmeldung nicht gefunden oder Sie haben keine Berechtigung, sie zu entfernen.');
         } else {
             $this->session->setFlash('success', 'Anmeldung entfernt.');
@@ -237,7 +238,7 @@ class EventController
         $this->session->requireLogin();
         $event = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
 
-        if (!$this->eventRepo->isOwner($event->eventId, $this->session->getUserId())) {
+        if (!$this->session->isAdmin() && !$this->eventRepo->isOwner($event->eventId, $this->session->getUserId())) {
             $this->response->abort403();
         }
 
@@ -261,7 +262,7 @@ class EventController
 
         $event = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
 
-        if (!$this->eventRepo->isOwner($event->eventId, $this->session->getUserId())) {
+        if (!$this->session->isAdmin() && !$this->eventRepo->isOwner($event->eventId, $this->session->getUserId())) {
             $this->response->abort403();
         }
 
@@ -294,7 +295,7 @@ class EventController
 
         $event = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
 
-        if (!$this->eventRepo->isOwner($event->eventId, $this->session->getUserId())) {
+        if (!$this->session->isAdmin() && !$this->eventRepo->isOwner($event->eventId, $this->session->getUserId())) {
             $this->response->abort403();
         }
 

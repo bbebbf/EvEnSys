@@ -51,5 +51,5 @@ interface EventRepositoryInterface
 
     public function findSubscriberByGuid(string $subscriberGuid): ?SubscriberDto;
 
-    public function deleteSubscriber(string $subscriberGuid, int $creatorUserId): bool;
+    public function deleteSubscriber(string $subscriberGuid, int $creatorUserId, bool $ignoreCreator = false): bool;
 }

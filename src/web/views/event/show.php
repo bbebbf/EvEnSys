@@ -10,7 +10,7 @@
 
     <div class="d-flex justify-content-between align-items-start mb-2">
       <h2><?= html_out($event->eventTitle) ?></h2>
-      <?php if (Session::isLoggedIn() && Session::getUserId() === $event->creatorUserId): ?>
+      <?php if ($isAdmin || (Session::isLoggedIn() && Session::getUserId() === $event->creatorUserId)): ?>
         <div class="btn-group ms-3">
           <a href="/events/<?= html_out($event->eventGuid) ?>/edit" class="btn btn-sm btn-outline-secondary">Bearbeiten</a>
           <?php
@@ -99,7 +99,7 @@
                   <?= html_out($sub->subscriberName ?? 'Unbekannt') ?>
                   <small class="text-muted ms-1"><?= html_out($sub->subscriberEnrollTimestamp->format('d.m.Y')) ?></small>
                 </span>
-                <?php if ($sub->creatorUserId === Session::getUserId()): ?>
+                <?php if ($isAdmin || $sub->creatorUserId === Session::getUserId()): ?>
                   <?php
                     $unenrollSubscriberGuid = $sub->subscriberGuid;
                     $unenrollEventGuid      = $event->eventGuid;

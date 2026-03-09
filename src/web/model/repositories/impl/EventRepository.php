@@ -371,12 +371,15 @@ class EventRepository implements EventRepositoryInterface
         return $row ? $this->mapSubscriberRow($row) : null;
     }
 
-    public function deleteSubscriber(string $subscriberGuid, int $creatorUserId): bool
+    public function deleteSubscriber(string $subscriberGuid, int $creatorUserId, bool $ignoreCreator = false): bool
     {
-        $stmt = $this->db->prepare(
-            'DELETE FROM subscriber WHERE subscriber_guid = ? AND creator_user_id = ?'
-        );
-        $stmt->bind_param('si', $subscriberGuid, $creatorUserId);
+        if ($ignoreCreator) {
+            $stmt = $this->db->prepare('DELETE FROM subscriber WHERE subscriber_guid = ?');
+            $stmt->bind_param('s', $subscriberGuid);
+        } else {
+            $stmt = $this->db->prepare('DELETE FROM subscriber WHERE subscriber_guid = ? AND creator_user_id = ?');
+            $stmt->bind_param('si', $subscriberGuid, $creatorUserId);
+        }
         $stmt->execute();
         $isDeleted = $stmt->affected_rows > 0;
         $stmt->close();
