@@ -22,9 +22,6 @@
       <tr>
         <th>Name</th>
         <th>E-Mail-Adresse</th>
-        <th>Anmeldung</th>
-        <th>Status</th>
-        <th>Rolle</th>
         <th>Aktionen</th>
       </tr>
     </thead>
@@ -41,26 +38,24 @@
         <?php else: ?>
           <tr data-search="<?= html_out($searchData) ?>">
         <?php endif; ?>
-          <td><?= html_out($u->userName) ?></td>
-          <td><?= html_out($u->userEmail) ?></td>
           <td>
-            <?php foreach ($oidcByUser[$u->userId] ?? [] as $identity): ?>
-              <span class="badge bg-info text-dark">
-                <?= html_out($oidcProviderInfos[$identity->providerKey]->label ?? $identity->providerKey) ?>
-              </span>
-            <?php endforeach; ?>
-          </td>
-          <td>
+            <?= html_out($u->userName) ?>
             <?php if ($u->userIsNew): ?>
               <span class="badge bg-success">Neu</span>
             <?php elseif (!$u->userIsActive): ?>
               <span class="badge bg-warning">Inaktiv</span>
             <?php endif; ?>
-          </td>
-          <td>
             <?php if ($u->userRole >= 1): ?>
               <span class="badge bg-primary">Admin</span>
             <?php endif; ?>
+          </td>
+          <td>
+            <?= html_out($u->userEmail) ?>
+            <?php foreach ($oidcByUser[$u->userId] ?? [] as $identity): ?>
+              <span class="badge bg-info text-dark">
+                <?= html_out($oidcProviderInfos[$identity->providerKey]->label ?? $identity->providerKey) ?>
+              </span>
+            <?php endforeach; ?>
           </td>
           <td>
             <?php if ($u->userId <> Session::getUserId()): ?>
