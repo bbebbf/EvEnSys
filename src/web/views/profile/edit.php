@@ -8,7 +8,7 @@
       <div class="card-header d-flex justify-content-between align-items-center">
         <strong>Daten</strong>
         <?php if ($user->userRole >= 1): ?>
-          <span class="badge bg-danger ms-2">Administrator</span>
+          <span class="badge bg-primary ms-2">Administrator</span>
         <?php endif; ?>
     </div>
       <div class="card-body">

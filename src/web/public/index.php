@@ -110,6 +110,7 @@ $router->post('/events/{guid}/unenroll/{subGuid}',   fn($p) => $eventController-
 $router->get('/admin/users',                              fn() => $authController->showAdminUsers());
 $router->post('/admin/users/{guid}/toggle-admin',         fn($p) => $authController->toggleAdminRole($req, $p['guid']));
 $router->post('/admin/users/{guid}/toggle-active',        fn($p) => $authController->toggleActive($req, $p['guid']));
+$router->post('/admin/users/{guid}/delete',               fn($p) => $authController->deleteUserAsAdmin($req, $p['guid']));
 $router->get('/profile/{guid}',                fn($p) => $authController->showProfile($p['guid']));
 $router->post('/profile/{guid}/name',          fn($p) => $authController->updateName($req, $p['guid']));
 $router->post('/profile/{guid}/password',      fn($p) => $authController->updatePassword($req, $p['guid']));

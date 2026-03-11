@@ -454,6 +454,43 @@ class AuthController
         $this->response->redirect('/admin/users');
     }
 
+    public function deleteUserAsAdmin(Request $req, string $guid): void
+    {
+        $this->session->requireLogin();
+        if (!$this->session->isAdmin()) {
+            $this->response->abort403();
+        }
+        if (!$this->session->validateCsrf($req->post('_csrf', ''))) {
+            $this->response->abort403();
+        }
+
+        $user = $this->userRepo->findByGuid($guid);
+        if ($user === null) {
+            $this->response->abort404();
+        }
+
+        if ($user->userId === $this->session->getUserId()) {
+            $this->session->setFlash('error', 'Sie können sich selbst nicht löschen. Nutzen Sie dafür Ihr eigenes Profil.');
+            $this->response->redirect('/admin/users');
+        }
+
+        if ($user->userRole >= 1 && $this->userRepo->countAdmins() <= 1) {
+            $this->session->setFlash('error', 'Der einzige Administrator kann nicht gelöscht werden.');
+            $this->response->redirect('/admin/users');
+        }
+
+        $this->eventRepo->deleteSubscribersForUserEvents($user->userId);
+        $this->eventRepo->deleteSubscribersByCreator($user->userId);
+        $this->eventRepo->deleteAllByUser($user->userId);
+        $this->resetRepo->deleteByUser($user->userId);
+        $this->activationRepo->deleteByUser($user->userId);
+        $this->oidcIdentityRepo->deleteByUser($user->userId);
+        $this->userRepo->delete($user->userId);
+
+        $this->session->setFlash('success', 'Benutzer ' . $user->userName . ' wurde gelöscht.');
+        $this->response->redirect('/admin/users');
+    }
+
     public function deleteProfile(Request $req, string $guid): void
     {
         $this->session->requireLogin();
