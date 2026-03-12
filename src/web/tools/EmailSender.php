@@ -28,7 +28,7 @@ class EmailSender
             ->send();
     }
 
-    public function sendEventCreatedEmail(string $toEmail, string $toName, string $eventTitle, string $eventDate, string $eventLink): bool
+    public function sendEventCreatedEmail(string $toEmail, string $toName, string $eventTitle, string $eventDate, string $eventLink, EventDto $event): bool
     {
         $appTitle = APP_CONFIG->getAppTitleShort();
 
@@ -45,6 +45,7 @@ class EmailSender
                 . $eventLink . "\r\n\r\n"
                 . "-- {$appTitle}\r\n"
             )
+            ->addAttachment(IcsGenerator::generate($event), 'veranstaltung.ics', 'text/calendar')
             ->send();
     }
 
@@ -64,7 +65,7 @@ class EmailSender
             ->send();
     }
 
-    public function sendEnrolledEmail(string $toEmail, string $toName, string $enrolleeName, string $eventTitle, string $eventDate, string $eventLink): bool
+    public function sendEnrolledEmail(string $toEmail, string $toName, string $enrolleeName, string $eventTitle, string $eventDate, string $eventLink, EventDto $event): bool
     {
         $appTitle = APP_CONFIG->getAppTitleShort();
         $isSelf   = $enrolleeName === $toName;
@@ -83,6 +84,7 @@ class EmailSender
                 . $eventLink . "\r\n\r\n"
                 . "-- {$appTitle}\r\n"
             )
+            ->addAttachment(IcsGenerator::generate($event), 'veranstaltung.ics', 'text/calendar')
             ->send();
     }
 

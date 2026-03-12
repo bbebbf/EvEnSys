@@ -143,6 +143,7 @@ class EventController
                 $event->eventTitle,
                 $eventDate,
                 $eventLink,
+                $event,
             );
             $this->session->setFlash('success', 'Sie wurden erfolgreich angemeldet.');
         } elseif ($type === 'other') {
@@ -163,6 +164,7 @@ class EventController
                 $event->eventTitle,
                 $eventDate,
                 $eventLink,
+                $event,
             );
             $this->session->setFlash('success', $name . ' wurde erfolgreich angemeldet.');
         } else {
@@ -258,18 +260,22 @@ class EventController
             return;
         }
 
-        $guid = $this->eventRepo->create($this->session->getUserId(), $data);
+        $guid        = $this->eventRepo->create($this->session->getUserId(), $data);
+        $createdEvent = $this->eventRepo->findByGuid($guid);
 
         $scheme    = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $eventLink = $scheme . '://' . $_SERVER['HTTP_HOST'] . '/events/' . $guid;
         $eventDate = event_date_out(new DateTimeImmutable($data['event_date']));
-        $this->emailSender->sendEventCreatedEmail(
-            $this->session->getUserEmail(),
-            $this->session->getUserName(),
-            $data['event_title'],
-            $eventDate,
-            $eventLink,
-        );
+        if ($createdEvent !== null) {
+            $this->emailSender->sendEventCreatedEmail(
+                $this->session->getUserEmail(),
+                $this->session->getUserName(),
+                $data['event_title'],
+                $eventDate,
+                $eventLink,
+                $createdEvent,
+            );
+        }
 
         $this->session->setFlash('success', 'Veranstaltung erfolgreich erstellt. Nach einer Prüfung wird sie innerhalb der nächsten Stunden für andere sichtbar sein.');
         $this->response->redirect('/events/' . $guid);

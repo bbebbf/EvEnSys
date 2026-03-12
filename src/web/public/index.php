@@ -53,6 +53,7 @@ require APP_ROOT . '/model/repositories/impl/OidcProviderRepository.php';
 
 // Load controllers
 require APP_ROOT . '/tools/Email.php';
+require APP_ROOT . '/tools/IcsGenerator.php';
 require APP_ROOT . '/tools/EmailSender.php';
 
 require APP_ROOT . '/controllers/ControllerTools.php';
