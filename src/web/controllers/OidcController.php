@@ -45,6 +45,7 @@ class OidcController
             'scope'         => implode(' ', $provider->scopes),
             'state'         => $state,
             'nonce'         => $nonce,
+            'prompt'        => 'select_account',
         ]);
 
         $this->response->redirect($discovery['authorization_endpoint'] . '?' . $params);
