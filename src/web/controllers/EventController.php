@@ -48,6 +48,7 @@ class EventController
             'pageTitle' => 'Alle Veranstaltungen',
             'events'    => $events,
             'isAdmin'   => $isAdmin,
+            'origin'    => 'all',
         ]);
     }
 
@@ -72,7 +73,7 @@ class EventController
         ]);
     }
 
-    public function show(string $guid): void
+    public function show(Request $req, string $guid): void
     {
         $event     = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
         $isAdmin   = $this->session->isAdmin();
@@ -85,6 +86,7 @@ class EventController
         $subscribers      = $this->eventRepo->findSubscribersByEvent($event->eventId);
         $isEnrolledAsSelf = $this->session->isLoggedIn()
             && $this->eventRepo->isUserEnrolledAsSelf($event->eventId, $this->session->getUserId());
+
         $this->view->render('event/show', [
             'pageTitle'        => $event->eventTitle,
             'event'            => $event,
@@ -93,6 +95,7 @@ class EventController
             'subscriberCount'  => count($subscribers),
             'isAdmin'          => $isAdmin,
             'isCreator'        => $isCreator,
+            'origin'           => $req->get('origin', ''),
         ]);
     }
 
@@ -387,7 +390,8 @@ class EventController
         }
 
         $this->session->setFlash('success', 'Veranstaltung gelöscht.');
-        $this->response->redirect('/events');
+        $redirectUrl = $req->post('origin') === 'all' ? '/events/all' : '/events';
+        $this->response->redirect($redirectUrl);
     }
 
     private function validateEventData(Request $req): array

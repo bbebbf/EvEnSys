@@ -1,5 +1,7 @@
 <?php
 // Required: $deleteEventGuid, $deleteEventTitle, $deleteEventDate
+// Optional: $deleteEventOrigin (default '')
+$deleteEventOrigin ??= '';
 ?>
 <button type="button" class="btn btn-sm btn-outline-danger"
         data-bs-toggle="modal"
@@ -13,6 +15,7 @@
       </div>
       <form method="post" action="/events/<?= html_out($deleteEventGuid) ?>/delete">
         <input type="hidden" name="_csrf" value="<?= html_out(Session::getCsrfToken()) ?>">
+        <input type="hidden" name="origin" value="<?= html_out($deleteEventOrigin) ?>">
         <div class="modal-body">
           <p>Möchtest du die folgende Veranstaltung wirklich dauerhaft löschen?</p>
           <p class="fw-bold"><?= html_out($deleteEventTitle) ?></p>

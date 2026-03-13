@@ -14,9 +14,10 @@
         <div class="btn-group ms-3">
           <a href="/events/<?= html_out($event->eventGuid) ?>/edit" class="btn btn-sm btn-outline-secondary">Bearbeiten</a>
           <?php
-            $deleteEventGuid  = $event->eventGuid;
-            $deleteEventTitle = $event->eventTitle;
-            $deleteEventDate  = $event->eventDate;
+            $deleteEventGuid   = $event->eventGuid;
+            $deleteEventTitle  = $event->eventTitle;
+            $deleteEventDate   = $event->eventDate;
+            $deleteEventOrigin = $origin;
             include APP_ROOT . '/views/event/_delete_modal.php';
           ?>
         </div>

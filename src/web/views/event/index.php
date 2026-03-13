@@ -65,7 +65,7 @@
           </div>
           <div class="card-body">
             <h5 class="card-title d-flex justify-content-between">
-              <a href="/events/<?= html_out($event->eventGuid) ?>" class="text-decoration-none stretched-link">
+            <a href="/events/<?= html_out($event->eventGuid) ?><?= mb_strlen($origin ?? '') > 0 ? '?origin=' . $origin : ''; ?>" class="text-decoration-none stretched-link">
                 <?= html_out($event->eventTitle) ?>
               </a>
             </h5>
