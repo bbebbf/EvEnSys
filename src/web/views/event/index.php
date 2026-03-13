@@ -6,7 +6,14 @@
     <?php endif; ?>
   </h2>
   <?php if (Session::isLoggedIn()): ?>
-    <a href="/events/create" class="btn btn-primary">+ Veranstaltung erstellen</a>
+    <div>
+      <a href="/events/create" class="text-decoration-none d-none d-lg-inline text-primary me-1 fs-5">
+          Veranstaltung erstellen
+      </a>
+      <a href="/events/create" class="btn btn-primary btn-lg">
+        <i class="bi bi-calendar-plus"></i>
+      </a>
+    </div>
   <?php endif; ?>
 </div>
 
