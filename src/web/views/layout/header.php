@@ -14,6 +14,13 @@
 </head>
 <body>
 
+<?php $_maintenanceBanner = APP_CONFIG->getMaintenanceBanner(); ?>
+<?php if ($_maintenanceBanner !== ''): ?>
+  <nav class="navbar navbar-expand text-white bg-danger align-items-center justify-content-center">
+    <h4><?= html_out($_maintenanceBanner) ?></h4>
+  </nav>
+<?php endif; ?>
+
 <nav class="navbar navbar-expand navbar-dark bg-dark">
   <div class="container">
     <a class="navbar-brand fw-bold" href="/"><?= html_out(APP_CONFIG->getAppTitleShort()) ?></a>

@@ -81,6 +81,11 @@ class AppConfig
         return $dt !== false ? $dt : null;
     }
 
+    public function getMaintenanceBanner(): string
+    {
+        return $this->get_str_value('MaintenanceBanner', '');
+    }
+
     public function getSearchbarStartsAtItemCount(): int
     {
         if (is_array($this->config) && array_key_exists('SearchbarStartsAtItemCount', $this->config)) {
