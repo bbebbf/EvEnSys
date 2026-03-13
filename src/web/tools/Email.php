@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 class Email
 {
+    private const CONTENT_TYPE_TEXT_PLAIN = "plain";
+    private const CONTENT_TYPE_TEXT_HTML = "html";
+
     private string $from     = '';
     private string $fromName = '';
     private string $subject  = '';
@@ -186,10 +189,10 @@ class Email
         if (!$hasHtml && !$hasAttachments) {
             return [
                 [
-                    'Content-Type: text/plain; charset=UTF-8',
-                    'Content-Transfer-Encoding: quoted-printable',
+                    $this->getContentTypeText(self::CONTENT_TYPE_TEXT_PLAIN),
+                    $this->getContentTransferEncoding(),
                 ],
-                quoted_printable_encode($this->textBody),
+                $this->getEncodedContent($this->textBody),
             ];
         }
 
@@ -205,9 +208,9 @@ class Email
             // Plain text + attachments
             $boundary = $this->newBoundary();
             $body  = "--$boundary\r\n";
-            $body .= "Content-Type: text/plain; charset=UTF-8\r\n";
-            $body .= "Content-Transfer-Encoding: quoted-printable\r\n\r\n";
-            $body .= quoted_printable_encode($this->textBody);
+            $body .= $this->getContentTypeText(self::CONTENT_TYPE_TEXT_PLAIN) . "\r\n";
+            $body .= $this->getContentTransferEncoding() . "\r\n\r\n";
+            $body .= $this->getEncodedContent($this->textBody);
             $body .= "\r\n";
             $body .= $this->buildAttachmentParts($boundary);
             $body .= "--$boundary--\r\n";
@@ -237,14 +240,14 @@ class Email
         $plainText = $this->textBody !== '' ? $this->textBody : $this->htmlToText($this->htmlBody);
 
         $body  = "--$boundary\r\n";
-        $body .= "Content-Type: text/plain; charset=UTF-8\r\n";
-        $body .= "Content-Transfer-Encoding: quoted-printable\r\n\r\n";
-        $body .= quoted_printable_encode($plainText);
+        $body .= $this->getContentTypeText(self::CONTENT_TYPE_TEXT_PLAIN) . "\r\n";
+        $body .= $this->getContentTransferEncoding() . "\r\n\r\n";
+        $body .= $this->getEncodedContent($plainText);
         $body .= "\r\n";
         $body .= "--$boundary\r\n";
-        $body .= "Content-Type: text/html; charset=UTF-8\r\n";
-        $body .= "Content-Transfer-Encoding: quoted-printable\r\n\r\n";
-        $body .= quoted_printable_encode($this->htmlBody);
+        $body .= $this->getContentTypeText(self::CONTENT_TYPE_TEXT_HTML) . "\r\n";
+        $body .= $this->getContentTransferEncoding() . "\r\n\r\n";
+        $body .= $this->getEncodedContent($this->htmlBody);
         $body .= "\r\n";
         $body .= "--$boundary--\r\n";
         return $body;
@@ -258,10 +261,25 @@ class Email
             $parts .= "--$boundary\r\n";
             $parts .= "Content-Type: {$attachment['mimeType']}; name=\"$encodedName\"\r\n";
             $parts .= "Content-Disposition: attachment; filename=\"$encodedName\"\r\n";
-            $parts .= "Content-Transfer-Encoding: base64\r\n\r\n";
-            $parts .= chunk_split(base64_encode($attachment['data']));
+            $parts .= $this->getContentTransferEncoding() . "\r\n\r\n";
+            $parts .= $this->getEncodedContent($attachment['data']);
         }
         return $parts;
+    }
+
+    private function getContentTypeText(string $textType): string
+    {
+        return "Content-Type: text/" . $textType . "; charset=\"utf-8\"";
+    }
+
+    private function getEncodedContent(string $content): string
+    {
+        return chunk_split(base64_encode($content));
+    }
+
+    private function getContentTransferEncoding(): string
+    {
+        return "Content-Transfer-Encoding: base64";
     }
 
     private function htmlToText(string $html): string
