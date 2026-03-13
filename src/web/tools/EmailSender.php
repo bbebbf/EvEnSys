@@ -46,19 +46,24 @@ class EmailSender
             ->send();
     }
 
-    public function sendEventDeletedEmail(string $toEmail, string $toName, string $eventTitle): bool
+    public function sendEventDeletedEmail(string $toEmail, string $toName, string $eventTitle, ?string $ccEmail = null, ?string $ccName = null): bool
     {
         $appTitle = APP_CONFIG->getAppTitleShort();
 
         $content = $this->paragraph("Hallo {$toName},")
             . $this->paragraph("Deine Veranstaltung <strong>" . htmlspecialchars($eventTitle) . "</strong> wurde gelöscht.");
 
-        return (new Email())
+        $email = (new Email())
             ->setFrom($this->noReplyAddress)
             ->addTo($toEmail, $toName)
             ->setSubject('Veranstaltung gelöscht: ' . $eventTitle)
-            ->setHtmlBody($this->wrapHtml($appTitle, 'Veranstaltung gelöscht', $content))
-            ->send();
+            ->setHtmlBody($this->wrapHtml($appTitle, 'Veranstaltung gelöscht', $content));
+
+        if ($ccEmail !== null) {
+            $email->addCc($ccEmail, $ccName ?? '');
+        }
+
+        return $email->send();
     }
 
     public function sendEnrolledEmail(string $toEmail, string $toName, string $enrolleeName, bool $isSelf, string $eventTitle, string $eventDate, string $eventLink, EventDto $event): bool
@@ -80,7 +85,7 @@ class EmailSender
             ->send();
     }
 
-    public function sendUnenrolledEmail(string $toEmail, string $toName, string $enrolleeName, bool $isSelf, string $eventTitle): bool
+    public function sendUnenrolledEmail(string $toEmail, string $toName, string $enrolleeName, bool $isSelf, string $eventTitle, ?string $ccEmail = null, ?string $ccName = null): bool
     {
         $appTitle = APP_CONFIG->getAppTitleShort();
         $who      = $isSelf ? 'Du wurdest' : '<strong>' . htmlspecialchars($enrolleeName) . '</strong> wurde';
@@ -89,27 +94,37 @@ class EmailSender
             . $this->paragraph("{$who} von der folgenden Veranstaltung abgemeldet:")
             . $this->details(['Titel' => $eventTitle]);
 
-        return (new Email())
+        $email = (new Email())
             ->setFrom($this->noReplyAddress)
             ->addTo($toEmail, $toName)
             ->setSubject('Abmeldung: ' . $eventTitle)
-            ->setHtmlBody($this->wrapHtml($appTitle, 'Abmeldung', $content))
-            ->send();
+            ->setHtmlBody($this->wrapHtml($appTitle, 'Abmeldung', $content));
+
+        if ($ccEmail !== null) {
+            $email->addCc($ccEmail, $ccName ?? '');
+        }
+
+        return $email->send();
     }
 
-    public function sendProfileDeletedEmail(string $toEmail, string $toName): bool
+    public function sendProfileDeletedEmail(string $toEmail, string $toName, ?string $ccEmail = null, ?string $ccName = null): bool
     {
         $appTitle = APP_CONFIG->getAppTitleShort();
 
         $content = $this->paragraph("Hallo {$toName},")
             . $this->paragraph("Dein Profil bei {$appTitle} wurde gelöscht. Alle deine Daten wurden entfernt.");
 
-        return (new Email())
+        $email = (new Email())
             ->setFrom($this->noReplyAddress)
             ->addTo($toEmail, $toName)
             ->setSubject($appTitle . '-Profil gelöscht')
-            ->setHtmlBody($this->wrapHtml($appTitle, 'Profil gelöscht', $content))
-            ->send();
+            ->setHtmlBody($this->wrapHtml($appTitle, 'Profil gelöscht', $content));
+
+        if ($ccEmail !== null) {
+            $email->addCc($ccEmail, $ccName ?? '');
+        }
+
+        return $email->send();
     }
 
     public function sendPasswordResetEmail(string $toEmail, string $toName, string $resetLink): bool

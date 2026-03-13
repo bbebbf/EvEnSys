@@ -460,6 +460,13 @@ class AuthController
             $this->response->redirect('/admin/users');
         }
 
+        $this->emailSender->sendProfileDeletedEmail(
+            $user->userEmail,
+            $user->userName,
+            $this->session->getUserEmail(),
+            $this->session->getUserName(),
+        );
+
         $this->eventRepo->deleteSubscribersForUserEvents($user->userId);
         $this->eventRepo->deleteSubscribersByCreator($user->userId);
         $this->eventRepo->deleteAllByUser($user->userId);

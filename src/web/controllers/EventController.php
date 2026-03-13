@@ -5,6 +5,7 @@ class EventController
 {
     public function __construct(
         private EventRepositoryInterface $eventRepo,
+        private UserRepositoryInterface $userRepo,
         private SessionInterface $session,
         private ViewInterface $view,
         private ResponseInterface $response,
@@ -193,13 +194,27 @@ class EventController
             $this->session->setFlash('error', 'Anmeldung nicht gefunden oder du hast keine Berechtigung, sie zu entfernen.');
         } else {
             if ($subscriber !== null) {
-                $this->emailSender->sendUnenrolledEmail(
-                    $this->session->getUserEmail(),
-                    $this->session->getUserName(),
-                    $subscriber->subscriberName ?? $this->session->getUserName(),
-                    $subscriber->subscriberIsCreator,
-                    $event->eventTitle,
-                );
+                $adminActingOnOther = $isAdmin && $subscriber->creatorUserId !== $userId;
+                if ($adminActingOnOther) {
+                    $enrollingUser = $this->userRepo->findById($subscriber->creatorUserId);
+                    $this->emailSender->sendUnenrolledEmail(
+                        $enrollingUser->userEmail,
+                        $enrollingUser->userName,
+                        $subscriber->subscriberName ?? $enrollingUser->userName,
+                        $subscriber->subscriberIsCreator,
+                        $event->eventTitle,
+                        $this->session->getUserEmail(),
+                        $this->session->getUserName(),
+                    );
+                } else {
+                    $this->emailSender->sendUnenrolledEmail(
+                        $this->session->getUserEmail(),
+                        $this->session->getUserName(),
+                        $subscriber->subscriberName ?? $this->session->getUserName(),
+                        $subscriber->subscriberIsCreator,
+                        $event->eventTitle,
+                    );
+                }
             }
             $this->session->setFlash('success', 'Anmeldung entfernt.');
         }
@@ -353,11 +368,23 @@ class EventController
         $this->eventRepo->deleteSubscribersByEvent($event->eventId);
         $this->eventRepo->delete($event->eventId);
 
-        $this->emailSender->sendEventDeletedEmail(
-            $this->session->getUserEmail(),
-            $this->session->getUserName(),
-            $event->eventTitle,
-        );
+        $adminActingOnOther = $this->session->isAdmin() && $event->creatorUserId !== $this->session->getUserId();
+        if ($adminActingOnOther) {
+            $creator = $this->userRepo->findById($event->creatorUserId);
+            $this->emailSender->sendEventDeletedEmail(
+                $creator->userEmail,
+                $creator->userName,
+                $event->eventTitle,
+                $this->session->getUserEmail(),
+                $this->session->getUserName(),
+            );
+        } else {
+            $this->emailSender->sendEventDeletedEmail(
+                $this->session->getUserEmail(),
+                $this->session->getUserName(),
+                $event->eventTitle,
+            );
+        }
 
         $this->session->setFlash('success', 'Veranstaltung gelöscht.');
         $this->response->redirect('/events');

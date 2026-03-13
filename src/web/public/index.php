@@ -94,7 +94,7 @@ $emailSender    = new EmailSender($noReplyAddress);
 
 // Instantiate controllers
 $authController  = new AuthController($userRepo, $resetRepo, $activationRepo, $oidcProviderRepo, $eventRepo, $oidcIdentityRepo, $session, $view, $response, $emailSender);
-$eventController = new EventController($eventRepo, $session, $view, $response, $emailSender);
+$eventController = new EventController($eventRepo, $userRepo, $session, $view, $response, $emailSender);
 $oidcProvisioner = new OidcUserProvisioner($userRepo, $oidcIdentityRepo);
 $oidcController  = new OidcController($userRepo, $oidcIdentityRepo, $oidcProviderRepo, $oidcProvisioner, $session, $view, $response);
 
