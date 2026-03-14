@@ -36,6 +36,7 @@ class EventController
             'pageTitle' => 'Bevorstehende Veranstaltungen',
             'events'    => $events,
             'isAdmin'   => $isAdmin,
+            'origin'    => 'upcoming',
         ]);
     }
 
@@ -258,9 +259,10 @@ class EventController
         $event = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
         $this->eventRepo->setVisible($event->eventId, !$event->eventIsVisible);
 
-        $msg = $event->eventIsVisible ? 'Veranstaltung ist jetzt versteckt.' : 'Veranstaltung ist jetzt sichtbar.';
+        $msg = $event->eventIsVisible ? 'Veranstaltung "' . $event->eventTitle . '" ist jetzt versteckt.' :
+                                        'Veranstaltung "' . $event->eventTitle . '" ist jetzt sichtbar.';
         $this->session->setFlash('success', $msg);
-        $this->response->redirect('/events/' . $guid);
+        $this->response->redirect($this->getRedirectUrlFromRequest($req, $guid));
     }
 
     public function showCreate(): void
@@ -407,12 +409,7 @@ class EventController
         }
 
         $this->session->setFlash('success', 'Veranstaltung gelöscht.');
-        $redirectUrl = match($req->post('origin')) {
-            'all' => '/events/all',
-            'new' => '/events/new',
-            default => '/events',
-        };
-        $this->response->redirect($redirectUrl);
+        $this->response->redirect($this->getRedirectUrlFromRequest($req));
     }
 
     private function validateEventData(Request $req): array
@@ -516,5 +513,15 @@ class EventController
     {
         $dt = $this->getMaxEventDate();
         return $dt !== null ? $dt->format('Y-m-d\TH:i') : '';
+    }
+
+    private function getRedirectUrlFromRequest($req, $eventGuid = ''): string
+    {         
+        return match($req->post('origin')) {
+            'upcoming' => '/events',
+            'all'      => '/events/all',
+            'new'      => '/events/new',
+            default    => '/events/' . $eventGuid,
+        };
     }
 }

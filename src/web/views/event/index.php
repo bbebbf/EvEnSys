@@ -56,6 +56,7 @@
                 <div class="mt-2 position-relative" style="z-index: 2;">
                   <form method="post" action="/events/<?= html_out($event->eventGuid) ?>/toggle-visible">
                     <input type="hidden" name="_csrf" value="<?= html_out(Session::getCsrfToken()) ?>">
+                    <input type="hidden" name="origin" value="<?= html_out($origin ?? '') ?>">
                     <button type="submit" class="btn btn-sm <?= $event->eventIsVisible ? 'btn-outline-warning' : 'btn-outline-success' ?>">
                       <?= $event->eventIsVisible ? 'Verstecken' : 'Sichtbar machen' ?>
                     </button>
