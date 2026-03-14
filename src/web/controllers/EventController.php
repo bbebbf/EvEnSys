@@ -419,6 +419,7 @@ class EventController
         $description = trim($req->post('event_description', ''));
         $dateRaw     = trim($req->post('event_date', ''));
         $location    = trim($req->post('event_location', ''));
+        $responsible = trim($req->post('event_responsible', ''));
         $durationRaw = trim($req->post('event_duration_hours', ''));
         $maxSubRaw   = trim($req->post('event_max_subscriber', ''));
 
@@ -432,6 +433,10 @@ class EventController
 
         if (mb_strlen($location) > 150) {
             $errors['event_location'] = 'Der Veranstaltungsort darf maximal 150 Zeichen lang sein.';
+        }
+
+        if (mb_strlen($responsible) > 150) {
+            $errors['event_responsible'] = 'Die verantwortliche Person darf maximal 150 Zeichen lang sein.';
         }
 
         $eventDate = null;
@@ -477,6 +482,7 @@ class EventController
                 'event_description'     => $description !== '' ? $description : null,
                 'event_date'            => $eventDate,
                 'event_location'        => $location !== '' ? $location : null,
+                'event_responsible'     => $responsible !== '' ? $responsible : null,
                 'event_duration_hours'  => $duration,
                 'event_max_subscriber'  => $maxSub,
             ],

@@ -27,6 +27,7 @@ CREATE TABLE `event` (
   `event_duration_hours` float DEFAULT NULL,
   `event_max_subscriber` smallint(5) unsigned DEFAULT NULL,
   `event_created_date` datetime NOT NULL DEFAULT current_timestamp(),
+  `event_responsible` varchar(150) DEFAULT NULL,
   PRIMARY KEY (`event_id`),
   UNIQUE KEY `event_event_guid_IDX` (`event_guid`) USING BTREE,
   KEY `event_user_FK` (`creator_user_id`),

@@ -164,11 +164,11 @@ class EventRepository implements EventRepositoryInterface
         $guid = $this->generateGuid();
         $initialActivatedValue = $this->isNewEventApprovalRequired ?  0 : 1;
         $stmt = $this->db->prepare(
-            "INSERT INTO event (event_guid, creator_user_id, event_is_activated, event_is_visible, event_title, event_description, event_date, event_location, event_duration_hours, event_max_subscriber)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO event (event_guid, creator_user_id, event_is_activated, event_is_visible, event_title, event_description, event_date, event_location, event_duration_hours, event_max_subscriber, event_responsible)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         $stmt->bind_param(
-            'siiissssdi',
+            'siiissssids',
             $guid,
             $creatorUserId,
             $initialActivatedValue,
@@ -178,7 +178,8 @@ class EventRepository implements EventRepositoryInterface
             $data['event_date'],
             $data['event_location'],
             $data['event_duration_hours'],
-            $data['event_max_subscriber']
+            $data['event_max_subscriber'],
+            $data['event_responsible']
         );
         $stmt->execute();
         $stmt->close();
@@ -191,17 +192,19 @@ class EventRepository implements EventRepositoryInterface
         $stmt = $this->db->prepare(
             'UPDATE event
                 SET event_title = ?, event_description = ?, event_date = ?,
-                    event_location = ?, event_duration_hours = ?, event_max_subscriber = ?
+                    event_location = ?, event_duration_hours = ?, event_max_subscriber = ?,
+                    event_responsible = ?
               WHERE event_id = ?'
         );
         $stmt->bind_param(
-            'ssssdii',
+            'ssssdssi',
             $data['event_title'],
             $data['event_description'],
             $data['event_date'],
             $data['event_location'],
             $data['event_duration_hours'],
             $data['event_max_subscriber'],
+            $data['event_responsible'],
             $eventId
         );
         $stmt->execute();
@@ -472,6 +475,7 @@ class EventRepository implements EventRepositoryInterface
             eventMaxSubscriber: isset($row['event_max_subscriber']) ? (int)$row['event_max_subscriber'] : null,
             eventCreatedDate:   isset($row['event_created_date']) ? new \DateTimeImmutable($row['event_created_date']) : null,
             creatorName:        $row['creator_name'] ?? null,
+            eventResponsible:   $row['event_responsible'] ?? null,
         );
     }
 

@@ -17,5 +17,17 @@ class EventDto
         public readonly ?int    $eventMaxSubscriber,
         public readonly ?\DateTimeImmutable $eventCreatedDate = null,
         public readonly ?string $creatorName = null,
+        public readonly ?string $eventResponsible = null,
     ) {}
+
+    public function getResponsibleName(): ?string
+    {
+        if ($this->eventResponsible !== null && trim($this->eventResponsible) !== '') {
+            return $this->eventResponsible;
+        }
+        if ($this->creatorName !== null) {
+            return $this->creatorName;
+        }
+        return null;
+    }
 }

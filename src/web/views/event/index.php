@@ -37,7 +37,7 @@
         $searchData = mb_strtolower($event->eventTitle .
             ' ' . ($event->eventDescription ?? '') .
             ' ' . ($event->eventLocation ?? '') .
-            ' ' . ($event->creatorName ?? ''));
+            ' ' . ($event->getResponsibleName() ?? ''));
       ?>
       <div class="col" data-search="<?= html_out($searchData) ?>">
 
@@ -90,7 +90,7 @@
             <?php endif; ?>
             </span>
             <span class="ms-2 text-body-tertiary">
-              <?= html_out($event->creatorName ?? 'Unbekannt') ?>
+              <?= html_out($event->getResponsibleName() ?? 'Unbekannt') ?>
             </span>
           </div>
         </div>

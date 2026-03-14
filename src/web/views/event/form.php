@@ -86,6 +86,18 @@ $action = $isEdit ? '/events/' . $event->eventGuid . '/edit' : '/events/create';
       </div>
 
       <div class="mb-3">
+        <label for="event_responsible" class="form-label">Verantwortlich (nur einzutragen, falls abweichend)</label>
+        <input type="text"
+               class="form-control <?= isset($errors['event_responsible']) ? 'is-invalid' : '' ?>"
+               id="event_responsible" name="event_responsible"
+               value="<?= html_out($val('event_responsible', 'eventResponsible')) ?>"
+               maxlength="150">
+        <?php if (isset($errors['event_responsible'])): ?>
+          <div class="invalid-feedback"><?= html_out($errors['event_responsible']) ?></div>
+        <?php endif; ?>
+      </div>
+
+      <div class="mb-3">
         <label for="event_location" class="form-label">Veranstaltungsort</label>
         <input type="text"
                class="form-control <?= isset($errors['event_location']) ? 'is-invalid' : '' ?>"

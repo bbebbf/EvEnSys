@@ -52,8 +52,8 @@
         <dd class="col-sm-9"><?= html_out($event->eventMaxSubscriber) ?></dd>
       <?php endif; ?>
 
-      <dt class="col-sm-3">Veranstalter</dt>
-      <dd class="col-sm-9"><?= html_out($event->creatorName ?? 'Unbekannt') ?></dd>
+      <dt class="col-sm-3">Verantwortlich</dt>
+      <dd class="col-sm-9"><?= html_out($event->getResponsibleName() ?? 'Unbekannt') ?></dd>
 
       <?php if ($isAdmin || $isCreator): ?>
         <dt class="col-sm-3">Sichtbarkeit</dt>
