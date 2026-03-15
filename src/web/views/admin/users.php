@@ -22,6 +22,7 @@
       <tr>
         <th>Name</th>
         <th>E-Mail-Adresse</th>
+        <th>Letzter Login</th>
         <th>Aktionen</th>
       </tr>
     </thead>
@@ -34,7 +35,7 @@
             . ' ' . implode(' ', $oidcLabels));
         ?>
         <?php if ($u->userId == Session::getUserId()): ?>
-          <tr class="table-primary" data-search="<?= html_out($searchData) ?>">
+          <tr class="table-success" data-search="<?= html_out($searchData) ?>">
         <?php else: ?>
           <tr data-search="<?= html_out($searchData) ?>">
         <?php endif; ?>
@@ -58,6 +59,9 @@
             <?php endforeach; ?>
           </td>
           <td>
+            <?= $u->userLastLogin ? html_out(date('d.m.Y H:i', strtotime($u->userLastLogin))) : '—' ?>
+          </td>
+          <td>
             <?php if ($u->userId <> Session::getUserId()): ?>
             <div class="d-flex gap-2">
               <form method="post" action="/admin/users/<?= html_out($u->userGuid) ?>/toggle-active">
@@ -69,6 +73,10 @@
                 <?php elseif (!$u->userIsNew): ?>
                   <button type="submit" class="btn btn-outline-warning btn-md" title="Benutzer reaktivieren">
                     <i class="bi bi-x-circle"></i>
+                  </button>
+                <?php else: ?>
+                  <button class="btn btn-primary btn-md invisible">
+                    <i class="bi bi-exclamation-square"></i>
                   </button>
                 <?php endif; ?>
               </form>
