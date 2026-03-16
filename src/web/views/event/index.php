@@ -32,6 +32,7 @@
     <p class="fs-5">Keine Veranstaltungen gefunden.</p>
   </div>
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="event-cards">
+    <?php $currentDateTime = APP_CONFIG->getDelayedCurrentDateTime(); ?>
     <?php foreach ($events as $event): ?>
       <?php
         $searchData = mb_strtolower($event->eventTitle .
@@ -42,7 +43,7 @@
       <div class="col" data-search="<?= html_out($searchData) ?>">
 
 
-        <div class="card h-100 shadow-sm <?= !$event->eventIsVisible ? 'bg-warning bg-opacity-25' : '' ?>">
+        <div class="card h-100 shadow-sm <?= $event->eventDate < $currentDateTime ? 'bg-secondary bg-opacity-25' : (!$event->eventIsVisible ? 'bg-warning bg-opacity-25' : '') ?>">
           <div class="card-header d-flex justify-content-between align-items-center">
             <span>
               <i class="bi bi-calendar-event"></i>
@@ -57,7 +58,7 @@
                   <form method="post" action="/events/<?= html_out($event->eventGuid) ?>/toggle-visible">
                     <input type="hidden" name="_csrf" value="<?= html_out(Session::getCsrfToken()) ?>">
                     <input type="hidden" name="origin" value="<?= html_out($origin ?? '') ?>">
-                    <button type="submit" class="btn btn-sm <?= $event->eventIsVisible ? 'btn-outline-warning' : 'btn-outline-success' ?>">
+                    <button type="submit" class="btn btn-sm <?= $event->eventIsVisible ? 'btn-warning' : 'btn-success' ?>">
                       <?= $event->eventIsVisible ? 'Verstecken' : 'Sichtbar machen' ?>
                     </button>
                   </form>

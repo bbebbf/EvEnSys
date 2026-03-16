@@ -66,7 +66,7 @@
           <?php if ($isAdmin): ?>
             <form method="post" action="/events/<?= html_out($event->eventGuid) ?>/toggle-visible" class="d-inline ms-2">
               <input type="hidden" name="_csrf" value="<?= html_out(Session::getCsrfToken()) ?>">
-              <button type="submit" class="btn btn-sm <?= $event->eventIsVisible ? 'btn-outline-warning' : 'btn-outline-success' ?>">
+              <button type="submit" class="btn btn-sm <?= $event->eventIsVisible ? 'btn-warning' : 'btn-success' ?>">
                 <?= $event->eventIsVisible ? 'Verstecken' : 'Sichtbar machen' ?>
               </button>
             </form>
