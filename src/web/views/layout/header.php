@@ -35,11 +35,12 @@
               <i class="bi bi-person"></i><span class="d-none d-md-inline">  <?= html_out(Session::getUserName()) ?><span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="/events/my"><i class="bi bi-calendar-event"></i> Meine Veranstaltungen</a></li>
+              <li><a class="dropdown-item" href="/events/my"><i class="bi bi-calendar3-range"></i> Meine Veranstaltungen</a></li>
               <li><a class="dropdown-item" href="/events/enrolled"><i class="bi bi-card-checklist"></i> Meine Anmeldungen</a></li>
               <div class="dropdown-divider"></div>
+              <li><a class="dropdown-item" href="/events"><i class="bi bi-calendar3-week"></i> Bevorstehende Veranstaltungen</a></li>
               <li><a class="dropdown-item" href="/events/new"><i class="bi bi-stars"></i> Neue Veranstaltungen</a></li>
-              <li><a class="dropdown-item" href="/events/all"><i class="bi bi-calendar-week"></i> Alle Veranstaltungen</a></li>
+              <li><a class="dropdown-item" href="/events/all"><i class="bi bi-calendar3"></i> Alle Veranstaltungen</a></li>
 
               <?php if (Session::isAdmin()): ?>
                 <div class="dropdown-divider"></div>

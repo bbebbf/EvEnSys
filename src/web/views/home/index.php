@@ -19,7 +19,7 @@
     <?php endif; ?>
   </div>
 <?php else: ?>
-  <h2 class="mb-4">Bevorstehende Veranstaltungen</h2>
+  <h2 class="mb-4">Die nächsten Veranstaltungen</h2>
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
     <?php foreach ($upcomingEvents as $event): ?>
       <div class="col">
@@ -60,7 +60,9 @@
     <?php endforeach; ?>
   </div>
 
-  <div class="text-center">
-    <a href="/login" class="btn btn-outline-secondary">Anmelden, um alle bevorstehenden Veranstaltungen zu sehen</a>
-  </div>
+  <?php if (!Session::isLoggedIn()): ?>
+    <div class="text-center">
+      <a href="/login" class="btn btn-outline-secondary">Anmelden, um alle bevorstehenden Veranstaltungen zu sehen</a>
+    </div>
+  <?php endif; ?>
 <?php endif; ?>

@@ -20,9 +20,6 @@ class EventController
 
     public function home(): void
     {
-        if ($this->session->isLoggedIn()) {
-            $this->response->redirect('/events');
-        }
         $upcomingEvents = $this->eventRepo->findUpcoming(3);
         $this->view->render('home/index', ['pageTitle' => 'Startseite', 'upcomingEvents' => $upcomingEvents]);
     }
