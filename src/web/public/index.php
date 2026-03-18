@@ -143,6 +143,9 @@ $router->get('/auth/oidc/{providerId}/link',     fn($p) => $oidcController->redi
 $router->get('/auth/oidc/{providerId}/callback', fn($p) => $oidcController->callback($req, $p['providerId']));
 $router->post('/profile/{guid}/oidc/{identityId}/unlink',
     fn($p) => $oidcController->unlinkIdentity($req, $p['guid'], (int)$p['identityId']));
+$router->get('/privacypolicy',
+    fn() => View::render('legal/privacypolicy', ['pageTitle' => 'Datenschutzerklärung']));
+
 
 try {
     $router->dispatch();

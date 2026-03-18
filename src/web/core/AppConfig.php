@@ -27,6 +27,31 @@ class AppConfig
         return $this->get_str_value('AppImpressUrl', '');
     }
 
+    public function getOperatorName(): string
+    {
+        return $this->get_str_value('OperatorName', '');
+    }
+
+    public function getOperatorStreet(): string
+    {
+        return $this->get_str_value('OperatorStreet', '');
+    }
+
+    public function getOperatorCity(): string
+    {
+        return $this->get_str_value('OperatorCity', '');
+    }
+
+    public function getOperatorResponsible(): string
+    {
+        return $this->get_str_value('OperatorResponsible', '');
+    }
+
+    public function getOperatorEmail(): string
+    {
+        return $this->get_str_value('OperatorEmail', '');
+    }
+
     public function getKioskSlideDurationMs(): int
     {
         if (is_array($this->config) && array_key_exists('KioskSlideDurationSec', $this->config)) {

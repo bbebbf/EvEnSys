@@ -9,6 +9,7 @@
       <?php else: ?>
         <a class="nav-link" href="#">Kein Impressum</a>
       <?php endif; ?>
+      <a class="nav-link" href="/privacypolicy">Datenschutzerklärung</a>
     </div>
   </div>
 </nav>
