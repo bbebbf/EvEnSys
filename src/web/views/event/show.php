@@ -58,8 +58,10 @@
         <dd class="col-sm-9"><?= html_out($event->eventMaxSubscriber) ?></dd>
       <?php endif; ?>
 
-      <dt class="col-sm-3">Verantwortlich</dt>
-      <dd class="col-sm-9"><?= html_out($event->getResponsibleName() ?? 'Unbekannt') ?></dd>
+      <?php if (Session::isLoggedIn()): ?>
+        <dt class="col-sm-3">Verantwortlich</dt>
+        <dd class="col-sm-9"><?= html_out($event->getResponsibleName() ?? 'Unbekannt') ?></dd>
+      <?php endif; ?>
 
       <?php if ($isAdmin || $isCreator): ?>
         <dt class="col-sm-3">Sichtbarkeit</dt>
