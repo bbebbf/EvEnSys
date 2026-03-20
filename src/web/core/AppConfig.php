@@ -155,6 +155,11 @@ class AppConfig
         return false;
     }
 
+    public function getNavbarColor(): string
+    {
+        return $this->get_str_value('NavbarColor', '#343a40');
+    }
+
     public function getAppLogo(): AppLogo
     {
         if ($this->appLogo === null) {

@@ -21,7 +21,7 @@
   </nav>
 <?php endif; ?>
 
-<nav class="navbar navbar-expand navbar-dark bg-dark">
+<nav class="navbar navbar-expand navbar-dark" style="background-color: <?= html_out(APP_CONFIG->getNavbarColor()) ?>;">
   <div class="container">
     <a class="navbar-brand fw-bold" href="/">
       <?php if (APP_CONFIG->getAppLogo()->getAppLogoExists()): ?>

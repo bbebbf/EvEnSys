@@ -181,8 +181,9 @@ class EmailSender
 
     private function wrapHtml(string $appTitle, string $heading, string $content): string
     {
-        $safeTitle   = htmlspecialchars($appTitle);
-        $safeHeading = htmlspecialchars($heading);
+        $safeTitle      = htmlspecialchars($appTitle);
+        $safeHeading    = htmlspecialchars($heading);
+        $navbarColor    = htmlspecialchars(APP_CONFIG->getNavbarColor());
 
         return <<<HTML
         <!DOCTYPE html>
@@ -200,7 +201,7 @@ class EmailSender
 
                   <!-- Header -->
                   <tr>
-                    <td style="background-color:#1a1a2e;border-radius:8px 8px 0 0;padding:24px 32px;">
+                    <td style="background-color:{$navbarColor};border-radius:8px 8px 0 0;padding:24px 32px;">
                       <p style="margin:0;font-size:18px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">{$safeTitle}</p>
                     </td>
                   </tr>
@@ -257,10 +258,11 @@ class EmailSender
 
     private function button(string $url, string $label): string
     {
-        $safeUrl   = htmlspecialchars($url);
-        $safeLabel = htmlspecialchars($label);
+        $safeUrl      = htmlspecialchars($url);
+        $safeLabel    = htmlspecialchars($label);
+        $navbarColor  = htmlspecialchars(APP_CONFIG->getNavbarColor());
         return "<p style=\"margin:0 0 16px 0;\">"
-            . "<a href=\"{$safeUrl}\" style=\"display:inline-block;padding:12px 24px;background-color:#1a1a2e;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;border-radius:6px;letter-spacing:0.3px;\">{$safeLabel}</a>"
+            . "<a href=\"{$safeUrl}\" style=\"display:inline-block;padding:12px 24px;background-color:{$navbarColor};color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;border-radius:6px;letter-spacing:0.3px;\">{$safeLabel}</a>"
             . "</p>\n";
     }
 }
