@@ -4,6 +4,7 @@ declare(strict_types=1);
 class AppConfig
 {
     private mixed $config = null;
+    private ?AppLogo $appLogo = null;
 
     public function __construct() {
         $_appConfigFile = dirname(APP_ROOT) . '/_config/app-config.json';
@@ -152,6 +153,14 @@ class AppConfig
             return (bool)$this->config['NewEventApprovalRequired'];
         }
         return false;
+    }
+
+    public function getAppLogo(): AppLogo
+    {
+        if ($this->appLogo === null) {
+            $this->appLogo = new AppLogo($this->get_str_value('AppLogoHeight', ''));
+        }
+        return $this->appLogo;
     }
 
     private function parse_datetime(string $key): ?DateTime

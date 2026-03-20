@@ -23,7 +23,16 @@
 
 <nav class="navbar navbar-expand navbar-dark bg-dark">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="/"><?= html_out(APP_CONFIG->getAppTitleShort()) ?></a>
+    <a class="navbar-brand fw-bold" href="/">
+      <?php if (APP_CONFIG->getAppLogo()->getAppLogoExists()): ?>
+        <img src="<?= html_out(APP_CONFIG->getAppLogo()->getAppLogoUrl()) ?>" 
+             alt="<?= html_out(APP_CONFIG->getAppTitleShort()) ?>" 
+             class="me-2 align-text-center"
+             <?= APP_CONFIG->getAppLogo()->getAppLogoStyle() ?>
+        >
+      <?php endif; ?>
+      <?= html_out(APP_CONFIG->getAppTitleShort()) ?>
+    </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>

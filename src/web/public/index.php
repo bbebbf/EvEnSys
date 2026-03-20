@@ -11,6 +11,7 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 // Load infrastructure
 require APP_ROOT . '/core/db.php';
 require APP_ROOT . '/core/AppConfig.php';
+require APP_ROOT . '/core/AppLogo.php';
 require APP_ROOT . '/core/Session.php';
 require APP_ROOT . '/core/Request.php';
 require APP_ROOT . '/core/Router.php';
