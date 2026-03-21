@@ -44,7 +44,7 @@ class EmailSender
             ->addTo($toEmail, $toName)
             ->setSubject($this->getEmailSubject('Veranstaltung erstellt: ' . $eventTitle))
             ->setHtmlBody($this->wrapHtml('Veranstaltung erstellt', $content))
-            ->addAttachment(IcsGenerator::generate($event), 'veranstaltung.ics', 'text/calendar')
+            ->addAttachment(IcsGenerator::generate($event), $this->sanitizeFileName($eventTitle . '.ics'), 'text/calendar')
             ->send();
     }
 
@@ -80,7 +80,7 @@ class EmailSender
             ->addTo($toEmail, $toName)
             ->setSubject($this->getEmailSubject('Anmeldung bestätigt: ' . $eventTitle))
             ->setHtmlBody($this->wrapHtml('Anmeldung bestätigt', $content))
-            ->addAttachment(IcsGenerator::generate($event), 'veranstaltung.ics', 'text/calendar')
+            ->addAttachment(IcsGenerator::generate($event), $this->sanitizeFileName($eventTitle . '.ics'), 'text/calendar')
             ->send();
     }
 
@@ -165,6 +165,22 @@ class EmailSender
             ->setSubject($this->getEmailSubject('Passwort zurücksetzen'))
             ->setHtmlBody($this->wrapHtml('Passwort zurücksetzen', $content))
             ->send();
+    }
+
+    private function sanitizeFileName(string $fileName): string
+    {
+        // Replace Windows-reserved characters: \ / : * ? " < > |
+        $safe = preg_replace('/[\\\\\/:\*\?"<>\|]/', '_', $fileName);
+        $safe = trim((string) $safe);
+
+        // Rename Windows-reserved device names (with or without extension, case-insensitive)
+        // e.g. CON, CON.txt, com1, LPT9.ics → _CON, _CON.txt, etc.
+        if (preg_match('/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\..+)?$/i', $safe)) {
+            $safe = '_' . $safe;
+        }
+
+        // Fall back to a generic name if the result is empty
+        return $safe !== '' ? $safe : 'attachment';
     }
 
     private function getEmailSubject(string $baseSubject): string
