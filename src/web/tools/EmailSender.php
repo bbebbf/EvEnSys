@@ -66,7 +66,7 @@ class EmailSender
         return $email->send();
     }
 
-    public function sendEnrolledEmail(string $toEmail, string $toName, string $enrolleeName, bool $isSelf, string $eventTitle, string $eventDate, string $eventLink, EventDto $event): bool
+    public function sendEnrolledEmail(string $toEmail, string $toName, string $enrolleeName, bool $isSelf, string $eventTitle, string $eventDate, string $eventLink, EventDto $event, ?string $ccEmail = null, ?string $ccName = null): bool
     {
         $who      = $isSelf ? 'Du wurdest' : '<strong>' . htmlspecialchars($enrolleeName) . '</strong> wurde';
 
@@ -75,16 +75,21 @@ class EmailSender
             . $this->details(['Titel' => $eventTitle, 'Datum' => $eventDate])
             . $this->button($eventLink, 'Zur Veranstaltung');
 
-        return (new Email())
+        $email = (new Email())
             ->setFrom($this->noReplyAddress)
             ->addTo($toEmail, $toName)
             ->setSubject($this->getEmailSubject('Anmeldung bestätigt: ' . $eventTitle))
             ->setHtmlBody($this->wrapHtml('Anmeldung bestätigt', $content))
-            ->addAttachment(IcsGenerator::generate($event), $this->sanitizeFileName($eventTitle . '.ics'), 'text/calendar')
-            ->send();
+            ->addAttachment(IcsGenerator::generate($event), $this->sanitizeFileName($eventTitle . '.ics'), 'text/calendar');
+
+        if ($ccEmail !== null) {
+            $email->addCc($ccEmail, $ccName ?? '');
+        }
+
+        return $email->send();
     }
 
-    public function sendUnenrolledEmail(string $toEmail, string $toName, string $enrolleeName, bool $isSelf, string $eventTitle, ?string $ccEmail = null, ?string $ccName = null): bool
+    public function sendUnenrolledEmail(string $toEmail, string $toName, string $enrolleeName, bool $isSelf, string $eventTitle, ?string $ccEmail = null, ?string $ccName = null, ?string $cc2Email = null, ?string $cc2Name = null): bool
     {
         $who      = $isSelf ? 'Du wurdest' : '<strong>' . htmlspecialchars($enrolleeName) . '</strong> wurde';
 
@@ -100,6 +105,10 @@ class EmailSender
 
         if ($ccEmail !== null) {
             $email->addCc($ccEmail, $ccName ?? '');
+        }
+
+        if ($cc2Email !== null) {
+            $email->addCc($cc2Email, $cc2Name ?? '');
         }
 
         return $email->send();

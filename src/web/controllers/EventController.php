@@ -152,6 +152,10 @@ class EventController
         $eventLink = $scheme . '://' . $_SERVER['HTTP_HOST'] . '/events/' . $guid;
         $eventDate = event_date_out($event->eventDate);
 
+        $creator      = $this->userRepo->findById($event->creatorUserId);
+        $creatorEmail = $creator?->userEmail;
+        $creatorName  = $creator?->userName;
+
         $type = $req->post('enroll_type', '');
         if ($type === 'self') {
             if ($this->eventRepo->isUserEnrolledAsSelf($event->eventId, $userId)) {
@@ -159,6 +163,7 @@ class EventController
                 $this->response->redirect('/events/' . $guid);
             }
             $this->eventRepo->createSubscriber($event->eventId, $userId, true, null);
+            $ccEmail = ($creatorEmail !== null && $creatorEmail !== $this->session->getUserEmail()) ? $creatorEmail : null;
             $this->emailSender->sendEnrolledEmail(
                 $this->session->getUserEmail(),
                 $this->session->getUserName(),
@@ -168,6 +173,8 @@ class EventController
                 $eventDate,
                 $eventLink,
                 $event,
+                $ccEmail,
+                $ccEmail !== null ? $creatorName : null,
             );
             $this->session->setFlash('success', 'Du wurdest erfolgreich angemeldet.');
         } elseif ($type === 'other') {
@@ -181,6 +188,7 @@ class EventController
                 $this->response->redirect('/events/' . $guid);
             }
             $this->eventRepo->createSubscriber($event->eventId, $userId, false, $name);
+            $ccEmail = ($creatorEmail !== null && $creatorEmail !== $this->session->getUserEmail()) ? $creatorEmail : null;
             $this->emailSender->sendEnrolledEmail(
                 $this->session->getUserEmail(),
                 $this->session->getUserName(),
@@ -190,6 +198,8 @@ class EventController
                 $eventDate,
                 $eventLink,
                 $event,
+                $ccEmail,
+                $ccEmail !== null ? $creatorName : null,
             );
             $this->session->setFlash('success', $name . ' wurde erfolgreich angemeldet.');
         } else {
@@ -216,9 +226,11 @@ class EventController
             $this->session->setFlash('error', 'Anmeldung nicht gefunden oder du hast keine Berechtigung, sie zu entfernen.');
         } else {
             if ($subscriber !== null) {
+                $creator            = $this->userRepo->findById($event->creatorUserId);
                 $adminActingOnOther = $isAdmin && $subscriber->creatorUserId !== $userId;
                 if ($adminActingOnOther) {
-                    $enrollingUser = $this->userRepo->findById($subscriber->creatorUserId);
+                    $enrollingUser  = $this->userRepo->findById($subscriber->creatorUserId);
+                    $creatorCcEmail = ($creator?->userEmail !== null && $creator->userEmail !== $enrollingUser->userEmail && $creator->userEmail !== $this->session->getUserEmail()) ? $creator->userEmail : null;
                     $this->emailSender->sendUnenrolledEmail(
                         $enrollingUser->userEmail,
                         $enrollingUser->userName,
@@ -227,14 +239,19 @@ class EventController
                         $event->eventTitle,
                         $this->session->getUserEmail(),
                         $this->session->getUserName(),
+                        $creatorCcEmail,
+                        $creatorCcEmail !== null ? $creator->userName : null,
                     );
                 } else {
+                    $creatorCcEmail = ($creator?->userEmail !== null && $creator->userEmail !== $this->session->getUserEmail()) ? $creator->userEmail : null;
                     $this->emailSender->sendUnenrolledEmail(
                         $this->session->getUserEmail(),
                         $this->session->getUserName(),
                         $subscriber->subscriberName ?? $this->session->getUserName(),
                         $subscriber->subscriberIsCreator,
                         $event->eventTitle,
+                        $creatorCcEmail,
+                        $creatorCcEmail !== null ? $creator->userName : null,
                     );
                 }
             }
