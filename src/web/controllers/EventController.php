@@ -260,6 +260,24 @@ class EventController
         $this->response->redirect($redirectUrl);
     }
 
+    public function downloadIcal(string $guid): void
+    {
+        $event     = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
+        $isAdmin   = $this->session->isAdmin();
+
+        if (!$event->eventIsVisible && !$isAdmin) {
+            $this->response->abort404();
+        }
+
+        $ics      = IcsGenerator::generate($event);
+        $filename = FileTools::sanitizeFileName($event->eventTitle . '.ics');
+
+        header('Content-Type: text/calendar; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($ics));
+        echo $ics;
+    }
+
     public function toggleVisible(Request $req, string $guid): void
     {
         $this->session->requireLogin();

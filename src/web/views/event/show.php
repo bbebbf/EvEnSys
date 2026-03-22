@@ -83,6 +83,9 @@
       <?php endif; ?>
     </dl>
 
+    <a href="/events/<?= html_out($event->eventGuid) ?>/ical" class="btn btn-sm btn-outline-primary mb-3">
+      <i class="bi bi-download"></i> Kalenderdatei (.ics)
+    </a>
   </div>
 
   <div class="col-lg-4">

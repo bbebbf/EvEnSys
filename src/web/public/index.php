@@ -54,6 +54,7 @@ require APP_ROOT . '/model/repositories/impl/OidcProviderRepository.php';
 
 // Load controllers
 require APP_ROOT . '/tools/Email.php';
+require APP_ROOT . '/tools/FileTools.php';
 require APP_ROOT . '/tools/IcsGenerator.php';
 require APP_ROOT . '/tools/EmailSender.php';
 
@@ -114,6 +115,7 @@ $router->get('/events/enrolled',       fn() => $eventController->indexEnrolled()
 $router->get('/events/create',         fn() => $eventController->showCreate());
 $router->post('/events/create',        fn() => $eventController->create($req));
 $router->get('/events/{guid}',           fn($p) => $eventController->show($req, $p['guid']));
+$router->get('/events/{guid}/ical',      fn($p) => $eventController->downloadIcal($p['guid']));
 $router->get('/events/{guid}/edit',      fn($p) => $eventController->showEdit($req, $p['guid']));
 $router->post('/events/{guid}/edit',     fn($p) => $eventController->update($req, $p['guid']));
 $router->post('/events/{guid}/delete',   fn($p) => $eventController->delete($req, $p['guid']));
