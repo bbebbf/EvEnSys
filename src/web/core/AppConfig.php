@@ -74,10 +74,10 @@ class AppConfig
         $delayMinutes = $this->getDelayedStartMinutes();
         $currentDatetime = new DateTime();
         if ($delayMinutes > 0) {
-            $currentDatetime = $currentDatetime->add(new DateInterval('PT' . $delayMinutes . 'M'));
+            $currentDatetime = $currentDatetime->sub(new DateInterval('PT' . $delayMinutes . 'M'));
         }
         elseif ($delayMinutes < 0) {
-            $currentDatetime = $currentDatetime->sub(new DateInterval('PT' . abs($delayMinutes) . 'M'));
+            $currentDatetime = $currentDatetime->add(new DateInterval('PT' . abs($delayMinutes) . 'M'));
         }
         return $currentDatetime;
     }

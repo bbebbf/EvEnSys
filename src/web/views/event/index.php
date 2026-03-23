@@ -32,7 +32,7 @@
     <p class="fs-5">Keine Veranstaltungen gefunden.</p>
   </div>
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="event-cards">
-    <?php $currentDateTime = APP_CONFIG->getDelayedCurrentDateTime(); ?>
+    <?php $delayedCurrentDateTime = APP_CONFIG->getDelayedCurrentDateTime(); ?>
     <?php foreach ($events as $event): ?>
       <?php
         $searchData = mb_strtolower($event->eventTitle .
@@ -45,7 +45,7 @@
       <div class="col" data-search="<?= html_out($searchData) ?>">
 
 
-        <div class="card h-100 shadow-sm <?= $event->eventDate < $currentDateTime ? 'bg-secondary bg-opacity-25' : (!$event->eventIsVisible ? 'bg-warning bg-opacity-25' : '') ?>">
+        <div class="card h-100 shadow-sm <?= $event->eventDate < $delayedCurrentDateTime ? 'bg-secondary bg-opacity-25' : (!$event->eventIsVisible ? 'bg-warning bg-opacity-25' : '') ?>">
           <div class="card-header d-flex justify-content-between align-items-center">
             <span>
               <i class="bi bi-calendar-event"></i>
