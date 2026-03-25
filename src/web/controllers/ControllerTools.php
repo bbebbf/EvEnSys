@@ -19,11 +19,17 @@ class ControllerTools
        Self::abort(404); 
     }
 
+    public static function abort_InternalServerError_500(): never
+    {
+       Self::abort(500);
+    }
+
     public static function abort(int $code): never
     {
         http_response_code($code);
         $errorView = APP_ROOT . '/views/errors/' . $code . '.php';
         if (file_exists($errorView)) {
+            extract(['pageTitle' => 'Fehler ' . $code], EXTR_SKIP);
             include APP_ROOT . '/views/layout/header.php';
             include $errorView;
             include APP_ROOT . '/views/layout/footer.php';

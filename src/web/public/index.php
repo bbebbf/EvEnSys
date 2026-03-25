@@ -154,10 +154,8 @@ try {
     $router->dispatch();
 } catch (mysqli_sql_exception $e) {
     error_log('DB error: ' . $e->getMessage());
-    http_response_code(500);
-    include APP_ROOT . '/views/errors/500.php';
+    ControllerTools::abort_InternalServerError_500();
 } catch (Throwable $e) {
     error_log('Unhandled error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-    http_response_code(500);
-    include APP_ROOT . '/views/errors/500.php';
+    ControllerTools::abort_InternalServerError_500();
 }
