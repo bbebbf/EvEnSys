@@ -17,7 +17,7 @@
 <?php $_maintenanceBanner = APP_CONFIG->getMaintenanceBanner(); ?>
 <?php if ($_maintenanceBanner !== ''): ?>
   <nav class="navbar navbar-expand text-white bg-danger align-items-center justify-content-center">
-    <h4 class="text-center"><?= html_out($_maintenanceBanner) ?></h4>
+    <h4 class="text-center p-1"><?= html_out($_maintenanceBanner) ?></h4>
   </nav>
 <?php endif; ?>
 
