@@ -46,6 +46,9 @@ interface EventRepositoryInterface
     /** @return SubscriberDto[] */
     public function findEnrolledByUser(int $userId): array;
 
+    /** @return SubscriberDto[] */
+    public function findAllEnrollments(): array;
+
     public function countSubscribers(int $eventId): int;
 
     public function isUserEnrolledAsSelf(int $eventId, int $userId): bool;

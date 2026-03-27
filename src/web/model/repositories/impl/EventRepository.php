@@ -345,6 +345,44 @@ class EventRepository implements EventRepositoryInterface
         return $rows;
     }
 
+    /** @return SubscriberDto[] */
+    public function findAllEnrollments(): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT s.subscriber_id, s.subscriber_guid, s.event_id, s.creator_user_id,
+                    s.subscriber_is_creator, s.subscriber_enroll_timestamp,
+                    IF(s.subscriber_is_creator, u.user_name, s.subscriber_name) AS subscriber_name,
+                    u.user_name AS creator_user_name,
+                    e.event_guid, e.event_title, e.event_date
+               FROM subscriber s
+               JOIN event e ON s.event_id = e.event_id
+               JOIN `user` u ON s.creator_user_id = u.user_id
+              ORDER BY e.event_date ASC, s.subscriber_enroll_timestamp ASC'
+        );
+        $stmt->execute();
+        $rows   = [];
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $rows[] = new SubscriberDto(
+                subscriberId:              (int)$row['subscriber_id'],
+                subscriberGuid:            $row['subscriber_guid'],
+                eventId:                   (int)$row['event_id'],
+                creatorUserId:             (int)$row['creator_user_id'],
+                subscriberIsCreator:       (bool)$row['subscriber_is_creator'],
+                subscriberName:            $row['subscriber_name'] ?? null,
+                subscriberEnrollTimestamp: new \DateTimeImmutable($row['subscriber_enroll_timestamp']),
+                eventGuid:                 $row['event_guid'],
+                eventTitle:                $row['event_title'],
+                eventDate:                 new \DateTimeImmutable($row['event_date']),
+                creatorUserName:           $row['creator_user_name'],
+            );
+        }
+        $result->free();
+        $stmt->close();
+
+        return $rows;
+    }
+
     public function countSubscribers(int $eventId): int
     {
         $stmt = $this->db->prepare('SELECT COUNT(*) FROM subscriber WHERE event_id = ?');

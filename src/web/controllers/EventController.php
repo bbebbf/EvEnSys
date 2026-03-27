@@ -87,6 +87,19 @@ class EventController
         ]);
     }
 
+    public function indexAdminEnrolled(): void
+    {
+        $this->session->requireLogin();
+        if (!$this->session->isAdmin()) {
+            $this->response->abort403();
+        }
+        $enrollments = $this->eventRepo->findAllEnrollments();
+        $this->view->render('event/admin_enrolled', [
+            'pageTitle'   => 'Alle Anmeldungen',
+            'enrollments' => $enrollments,
+        ]);
+    }
+
     public function show(Request $req, string $guid): void
     {
         $event     = $this->eventRepo->findByGuid($guid) ?? $this->response->abort404();
@@ -244,7 +257,11 @@ class EventController
             $this->session->setFlash('success', $unenrolledUserName . ' wurde erfolgreich abgemeldet.');
         }
 
-        $redirectUrl = $req->post('source') === 'enrolled' ? '/events/enrolled' : '/events/' . $guid;
+        $redirectUrl = match($req->post('source')) {
+            'enrolled'       => '/events/enrolled',
+            'admin_enrolled' => '/admin/enrollments',
+            default          => '/events/' . $guid,
+        };
         $this->response->redirect($redirectUrl);
     }
 

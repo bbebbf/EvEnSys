@@ -122,6 +122,7 @@ $router->post('/events/{guid}/delete',   fn($p) => $eventController->delete($req
 $router->post('/events/{guid}/enroll',             fn($p) => $eventController->enroll($req, $p['guid']));
 $router->post('/events/{guid}/toggle-visible',     fn($p) => $eventController->toggleVisible($req, $p['guid']));
 $router->post('/events/{guid}/unenroll/{subGuid}',   fn($p) => $eventController->unenroll($req, $p['guid'], $p['subGuid']));
+$router->get('/admin/enrollments',                        fn() => $eventController->indexAdminEnrolled());
 $router->get('/admin/users',                              fn() => $authController->showAdminUsers());
 $router->post('/admin/users/{guid}/toggle-admin',         fn($p) => $authController->toggleAdminRole($req, $p['guid']));
 $router->post('/admin/users/{guid}/toggle-active',        fn($p) => $authController->toggleActive($req, $p['guid']));
