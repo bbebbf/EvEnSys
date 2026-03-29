@@ -95,8 +95,7 @@ $session  = new AppSession();
 $view     = new AppView();
 $response = new AppResponse();
 
-$noReplyAddress = APP_CONFIG->getAppTitleShort() . ' <noreply@' . $_SERVER['HTTP_HOST'] . '>';
-$emailSender    = new EmailSender($noReplyAddress);
+$emailSender    = new EmailSender(APP_CONFIG->getNotificationFromEmail());
 
 // Instantiate controllers
 $authController  = new AuthController($userRepo, $resetRepo, $activationRepo, $oidcProviderRepo, $eventRepo, $oidcIdentityRepo, $session, $view, $response, $emailSender);

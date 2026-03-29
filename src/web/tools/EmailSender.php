@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 class EmailSender
 {
-    private string $noReplyAddress;
+    private string $fromAddress;
     private string $appTitleShort;
     private string $appTitleLong;
     private string $navbarColor;
 
-    public function __construct(string $noReplyAddress)
+    public function __construct(string $fromAddress)
     {
-        $this->noReplyAddress = $noReplyAddress;
+        $this->fromAddress    = $fromAddress;
         $this->appTitleShort  = htmlspecialchars(APP_CONFIG->getAppTitleShort());
         $this->appTitleLong   = htmlspecialchars(APP_CONFIG->getAppTitleLong());
         $this->navbarColor    = htmlspecialchars(APP_CONFIG->getNavbarColor());
@@ -25,7 +25,7 @@ class EmailSender
             . $this->paragraph('Falls du dich nicht registriert hast, kannst du diese E-Mail ignorieren.', true);
 
         return (new Email())
-            ->setFrom($this->noReplyAddress)
+            ->setFrom($this->fromAddress)
             ->addTo($toEmail, $toName)
             ->setSubject($this->getEmailSubject('Konto aktivieren'))
             ->setHtmlBody($this->wrapHtml('Konto aktivieren', $content))
@@ -40,7 +40,7 @@ class EmailSender
             . $this->button($eventLink, 'Zur Veranstaltung');
 
         return (new Email())
-            ->setFrom($this->noReplyAddress)
+            ->setFrom($this->fromAddress)
             ->addTo($toEmail, $toName)
             ->setSubject($this->getEmailSubject('Veranstaltung erstellt: ' . $eventTitle))
             ->setHtmlBody($this->wrapHtml('Veranstaltung erstellt', $content))
@@ -54,7 +54,7 @@ class EmailSender
             . $this->paragraph("Deine Veranstaltung <strong>" . htmlspecialchars($eventTitle) . "</strong> wurde gelöscht.");
 
         $email = (new Email())
-            ->setFrom($this->noReplyAddress)
+            ->setFrom($this->fromAddress)
             ->addTo($toEmail, $toName)
             ->setSubject($this->getEmailSubject('Veranstaltung gelöscht: ' . $eventTitle))
             ->setHtmlBody($this->wrapHtml('Veranstaltung gelöscht', $content));
@@ -76,7 +76,7 @@ class EmailSender
             . $this->button($eventLink, 'Zur Veranstaltung');
 
         $email = (new Email())
-            ->setFrom($this->noReplyAddress)
+            ->setFrom($this->fromAddress)
             ->addTo($toEmail, $toName)
             ->setSubject($this->getEmailSubject('Anmeldung bestätigt: ' . $eventTitle))
             ->setHtmlBody($this->wrapHtml('Anmeldung bestätigt', $content))
@@ -98,7 +98,7 @@ class EmailSender
             . $this->details(['Titel' => $eventTitle]);
 
         $email = (new Email())
-            ->setFrom($this->noReplyAddress)
+            ->setFrom($this->fromAddress)
             ->addTo($toEmail, $toName)
             ->setSubject($this->getEmailSubject('Abmeldung: ' . $eventTitle))
             ->setHtmlBody($this->wrapHtml('Abmeldung', $content));
@@ -121,7 +121,7 @@ class EmailSender
             . $this->paragraph('Damit hast du jetzt Zugriff auf den Administrator-Bereich.', true);
 
         return (new Email())
-            ->setFrom($this->noReplyAddress)
+            ->setFrom($this->fromAddress)
             ->addTo($toEmail, $toName)
             ->setSubject($this->getEmailSubject('Administrator-Rechte vergeben'))
             ->setHtmlBody($this->wrapHtml('Administrator-Rechte vergeben', $content))
@@ -135,7 +135,7 @@ class EmailSender
             . $this->paragraph('Du hast nun keinen Zugriff mehr auf den Administrator-Bereich.', true);
 
         return (new Email())
-            ->setFrom($this->noReplyAddress)
+            ->setFrom($this->fromAddress)
             ->addTo($toEmail, $toName)
             ->setSubject($this->getEmailSubject('Administrator-Rechte entzogen'))
             ->setHtmlBody($this->wrapHtml('Administrator-Rechte entzogen', $content))
@@ -148,7 +148,7 @@ class EmailSender
             . $this->paragraph("Dein Profil bei {$this->appTitleShort} wurde gelöscht. Alle deine Daten wurden entfernt.");
 
         $email = (new Email())
-            ->setFrom($this->noReplyAddress)
+            ->setFrom($this->fromAddress)
             ->addTo($toEmail, $toName)
             ->setSubject($this->getEmailSubject('Profil gelöscht'))
             ->setHtmlBody($this->wrapHtml('Profil gelöscht', $content));
@@ -169,7 +169,7 @@ class EmailSender
             . $this->paragraph('Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.', true);
 
         return (new Email())
-            ->setFrom($this->noReplyAddress)
+            ->setFrom($this->fromAddress)
             ->addTo($toEmail, $toName)
             ->setSubject($this->getEmailSubject('Passwort zurücksetzen'))
             ->setHtmlBody($this->wrapHtml('Passwort zurücksetzen', $content))

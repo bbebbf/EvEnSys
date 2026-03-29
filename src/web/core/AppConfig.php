@@ -60,6 +60,12 @@ class AppConfig
         return $this->get_str_value('OperatorEmail', '');
     }
 
+    public function getNotificationFromEmail(): string
+    {
+        $noReplyAddress = $this->getAppTitleShort() . ' <noreply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '>';
+        return $this->get_str_value('NotificationFromEmail', $noReplyAddress);
+    }
+
     public function getKioskSlideDurationMs(): int
     {
         if (is_array($this->config) && array_key_exists('KioskSlideDurationSec', $this->config)) {
