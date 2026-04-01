@@ -30,9 +30,10 @@ workspace "EvEnSys" "Event-Anmeldesystem – C4-Architekturmodell" {
                 userRepo        = component "UserRepository" "Kapselt alle Datenbankzugriffe für Benutzerkonten, Aktivierungs-Tokens und Passwort-Reset-Tokens." "PHP, MySQLi"
                 oidcIdentityRepo = component "OidcIdentityRepository" "Kapselt alle Datenbankzugriffe für OIDC-Identitätsverknüpfungen." "PHP, MySQLi"
 
-                emailGenerator = component "EmailGenerator" "Erstellt und versendet HTML-E-Mails für alle systemseitigen Benachrichtigungen. Hängt ICS-Dateien bei Anmeldungen an." "PHP, SMTP"
-                icsGenerator   = component "IcsGenerator" "Erzeugt RFC-5545-konforme iCalendar-Dateien (VCALENDAR/VEVENT) aus Veranstaltungsdaten." "PHP"
-                fileTools      = component "FileTools" "Bereinigt Dateinamen für sichere Content-Disposition-Header (entfernt Windows-Sonderzeichen und reservierte Gerätenamen)." "PHP"
+                emailGenerator   = component "EmailGenerator" "Erstellt HTML-E-Mails für alle systemseitigen Benachrichtigungen und delegiert das Versenden an EmailSenderInterface. Hängt ICS-Dateien bei Anmeldungen an." "PHP"
+                emailSenderPhpMail = component "EmailSenderPhpMail" "Implementiert EmailSenderInterface. Versendet E-Mails über PHP's mail()-Funktion. Unterstützt Text, HTML, Multipart und Anhänge." "PHP, mail()"
+                icsGenerator     = component "IcsGenerator" "Erzeugt RFC-5545-konforme iCalendar-Dateien (VCALENDAR/VEVENT) aus Veranstaltungsdaten." "PHP"
+                fileTools        = component "FileTools" "Bereinigt Dateinamen für sichere Content-Disposition-Header (entfernt Windows-Sonderzeichen und reservierte Gerätenamen)." "PHP"
 
                 views = component "Views" "PHP-Templates (Bootstrap 5). Rendert HTML-Seiten für alle Ansichten: Veranstaltungslisten, Detailseite, Formulare, Profil, Login, Kiosk." "PHP, Bootstrap 5"
             }
@@ -90,9 +91,10 @@ workspace "EvEnSys" "Event-Anmeldesystem – C4-Architekturmodell" {
         oidcController -> views            "Rendert HTML-Seiten"
 
         # EmailGenerator
-        emailGenerator -> icsGenerator "Generiert ICS-Datei für E-Mail-Anhang"
-        emailGenerator -> fileTools    "Bereinigt Dateinamen für E-Mail-Anhang"
-        emailGenerator -> mailpit      "Versendet E-Mail" "SMTP"
+        emailGenerator -> icsGenerator       "Generiert ICS-Datei für E-Mail-Anhang"
+        emailGenerator -> fileTools          "Bereinigt Dateinamen für E-Mail-Anhang"
+        emailGenerator -> emailSenderPhpMail "Versendet E-Mail über EmailSenderInterface"
+        emailSenderPhpMail -> mailpit        "Versendet E-Mail" "SMTP"
 
         # Repositories → Datenbank
         eventRepo        -> database "SQL-Abfragen" "MySQLi"
