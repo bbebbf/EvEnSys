@@ -52,7 +52,7 @@ class Email
 
     public function getTextBody(): string
     {
-        return $this->textBody;
+        return $this->textBody !== '' ? $this->textBody : $this->htmlToText($this->htmlBody);
     }
 
     public function setHtmlBody(string $html): static
@@ -142,5 +142,16 @@ class Email
     public function getAttachments(): array
     {
         return $this->attachments;
+    }
+
+    private function htmlToText(string $html): string
+    {
+        $text = str_replace(
+            ['<br>', '<br/>', '<br />', '</p>', '</div>', '</li>', '</h1>', '</h2>', '</h3>', '</h4>'],
+            "\n",
+            $html
+        );
+        $text = strip_tags($text);
+        return html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 }

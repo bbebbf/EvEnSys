@@ -145,7 +145,7 @@ class EmailSenderPhpMail implements EmailSenderInterface
 
     private function buildAlternativeBody(Email $email, string $boundary): string
     {
-        $plainText = $email->getTextBody() !== '' ? $email->getTextBody() : $this->htmlToText($email->getHtmlBody());
+        $plainText = $email->getTextBody();
 
         $body  = "--$boundary\r\n";
         $body .= $this->getContentTypeText(self::CONTENT_TYPE_TEXT_PLAIN) . "\r\n";
@@ -188,17 +188,6 @@ class EmailSenderPhpMail implements EmailSenderInterface
     private function getContentTransferEncoding(): string
     {
         return "Content-Transfer-Encoding: base64";
-    }
-
-    private function htmlToText(string $html): string
-    {
-        $text = str_replace(
-            ['<br>', '<br/>', '<br />', '</p>', '</div>', '</li>', '</h1>', '</h2>', '</h3>', '</h4>'],
-            "\n",
-            $html
-        );
-        $text = strip_tags($text);
-        return html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
     private function newBoundary(): string
