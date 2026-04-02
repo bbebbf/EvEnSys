@@ -7,10 +7,10 @@ class PasswordResetRepository implements PasswordResetRepositoryInterface
 
     /**
      * Deletes any existing tokens for the user, creates a new one that
-     * expires in one hour, and returns the raw (unhashed) token to be
+     * expires in X hours, and returns the raw (unhashed) token to be
      * sent by email.
      */
-    public function createToken(int $userId): string
+    public function createToken(int $userId, int $validityHours): string
     {
         $this->deleteByUser($userId);
 
@@ -19,9 +19,9 @@ class PasswordResetRepository implements PasswordResetRepositoryInterface
 
         $stmt = $this->db->prepare(
             "INSERT INTO password_reset (user_id, reset_token_hash, reset_expires_at)
-             VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))"
+             VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? HOUR))"
         );
-        $stmt->bind_param('is', $userId, $tokenHash);
+        $stmt->bind_param('isi', $userId, $tokenHash, $validityHours);
         $stmt->execute();
         $stmt->close();
 

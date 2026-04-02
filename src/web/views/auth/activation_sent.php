@@ -11,7 +11,7 @@
       und melde dich gerne bei <?= html_out(APP_CONFIG->getOperatorResponsible()) ?> (<?= html_out(APP_CONFIG->getOperatorEmail()) ?>).
     </p>
     <p class="text-muted">
-      Der Link ist 24 Stunden gültig.
+      Der Link ist <?= html_out(APP_CONFIG->getActivationTokenValidityHours()) ?> Stunden gültig.
     </p>
     <p class="mt-3">
       <a href="/login">Zurück zur Anmeldung</a>

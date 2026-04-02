@@ -150,9 +150,9 @@ $_opMissing = $_opName === '' || $_opStreet === '' || $_opCity === '' || $_opEma
       </p>
       <ul>
         <li><strong>Kontoaktivierung</strong> — nach der Registrierung wird ein Aktivierungslink
-          versendet (gültig für 24 Stunden)</li>
+          versendet (gültig für <?= html_out(APP_CONFIG->getActivationTokenValidityHours()) ?> Stunden)</li>
         <li><strong>Passwort-Zurücksetzen</strong> — auf Anfrage wird ein Link zum Zurücksetzen
-          des Passworts gesendet (gültig für 1 Stunde)</li>
+          des Passworts gesendet (gültig für <?= html_out(APP_CONFIG->getPasswordResetTokenValidityHours()) ?> Stunden)</li>
         <li><strong>Profil gelöscht</strong> — Bestätigung an den betroffenen Nutzer</li>
         <li><strong>Administrator-Rechte vergeben oder entzogen</strong> — Benachrichtigung an
           den betroffenen Nutzer</li>
@@ -231,7 +231,7 @@ $_opMissing = $_opName === '' || $_opStreet === '' || $_opCity === '' || $_opEma
         <li>Übertragung aller Daten über eine verschlüsselte HTTPS-Verbindung (TLS)</li>
         <li>Speicherung von Passwörtern ausschließlich als bcrypt-Hash</li>
         <li>Verwendung von CSRF-Tokens zum Schutz vor Cross-Site-Request-Forgery</li>
-        <li>Nicht erratbare Veranstaltungs-URLs (UUIDs statt fortlaufende Nummern)</li>
+        <li>Nicht erratbare URLs (UUIDs statt fortlaufende Nummern)</li>
       </ul>
     </section>
 

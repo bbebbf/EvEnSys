@@ -22,7 +22,8 @@ class EmailGenerator
     {
         $content = $this->paragraph("Hallo {$toName},")
             . $this->paragraph("Vielen Dank für deine Registrierung bei {$this->appTitleShort}.")
-            . $this->paragraph("Klicke auf die Schaltfläche, um dein Konto zu aktivieren. Der Link ist <strong>24 Stunden</strong> gültig.")
+            . $this->paragraph("Klicke auf die Schaltfläche, um dein Konto zu aktivieren. Der Link ist <strong>"
+              . htmlspecialchars((string)APP_CONFIG->getActivationTokenValidityHours()) . " Stunden</strong> gültig.")
             . $this->button($activationLink, 'Konto aktivieren')
             . $this->paragraph('Falls du dich nicht registriert hast, kannst du diese E-Mail ignorieren.', true);
 
@@ -170,7 +171,8 @@ class EmailGenerator
     {
         $content = $this->paragraph("Hallo {$toName},")
             . $this->paragraph("Du hast eine Passwortzurücksetzung für dein {$this->appTitleShort}-Konto angefordert.")
-            . $this->paragraph("Klicke auf die Schaltfläche, um ein neues Passwort festzulegen. Der Link ist <strong>1 Stunde</strong> gültig.")
+            . $this->paragraph("Klicke auf die Schaltfläche, um ein neues Passwort festzulegen. Der Link ist <strong>"
+              . htmlspecialchars((string)APP_CONFIG->getPasswordResetTokenValidityHours()) . " Stunden</strong> gültig.")
             . $this->button($resetLink, 'Passwort zurücksetzen')
             . $this->paragraph('Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.', true);
 

@@ -76,7 +76,7 @@ class AuthController
         $hash   = password_hash($pwd, PASSWORD_BCRYPT);
         $userId = $this->userRepo->create($name, $email, $hash);
 
-        $rawToken = $this->activationRepo->createToken($userId);
+        $rawToken = $this->activationRepo->createToken($userId, APP_CONFIG->getActivationTokenValidityHours());
 
         $scheme  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];
@@ -99,14 +99,14 @@ class AuthController
         $record   = $rawToken !== '' ? $this->activationRepo->findValidByToken($rawToken) : null;
 
         if ($record === null) {
-            $this->session->setFlash('error', 'Dieser Aktivierungslink ist ungültig oder abgelaufen. Bitte registriere dich erneut.');
+            $this->session->setFlash('error', 'Dieser Aktivierungslink ist ungültig oder abgelaufen.');
             $this->response->redirect('/login');
         }
 
         $this->userRepo->activate((int)$record['user_id']);
         $this->activationRepo->markUsed((int)$record['token_id']);
 
-        $this->session->setFlash('success', 'Konto aktiviert. Du kannst dich jetzt anmelden.');
+        $this->session->setFlash('success', 'Dein Konto ist jetzt aktiviert. Du kannst dich jetzt anmelden.');
         $this->response->redirect('/login');
     }
 
@@ -172,7 +172,7 @@ class AuthController
             : null;
 
         if ($user !== null && $user->userIsActive && $user->userPasswd !== null) {
-            $rawToken = $this->resetRepo->createToken($user->userId);
+            $rawToken = $this->resetRepo->createToken($user->userId, APP_CONFIG->getPasswordResetTokenValidityHours());
 
             $scheme  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
             $baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];

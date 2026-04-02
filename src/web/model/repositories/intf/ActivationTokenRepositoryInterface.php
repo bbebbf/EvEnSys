@@ -5,10 +5,10 @@ interface ActivationTokenRepositoryInterface
 {
     /**
      * Deletes any existing activation tokens for the user, creates a new one
-     * that expires in 24 hours, and returns the raw (unhashed) token to be
+     * that expires in X hours, and returns the raw (unhashed) token to be
      * sent by email.
      */
-    public function createToken(int $userId): string;
+    public function createToken(int $userId, int $validityHours): string;
 
     /**
      * Hashes the raw token and looks up a record that is not yet expired

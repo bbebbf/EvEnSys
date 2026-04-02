@@ -200,6 +200,22 @@ class AppConfig
         return new EmailSenderPhpMail();
     }
 
+    public function getPasswordResetTokenValidityHours(): int
+    {
+        if (is_array($this->config) && array_key_exists('PasswordResetTokenValidityHours', $this->config)) {
+            return max(1, (int)$this->config['PasswordResetTokenValidityHours']);
+        }
+        return 2;
+    }
+
+    public function getActivationTokenValidityHours(): int
+    {
+        if (is_array($this->config) && array_key_exists('ActivationTokenValidityHours', $this->config)) {
+            return max(1, (int)$this->config['ActivationTokenValidityHours']);
+        }
+        return 24;
+    }
+
     private function parse_datetime(string $key): ?DateTime
     {
         $value = $this->get_str_value($key);

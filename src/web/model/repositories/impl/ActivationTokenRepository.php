@@ -7,10 +7,10 @@ class ActivationTokenRepository implements ActivationTokenRepositoryInterface
 
     /**
      * Deletes any existing activation tokens for the user, creates a new one
-     * that expires in 24 hours, and returns the raw (unhashed) token to be
+     * that expires in X hours, and returns the raw (unhashed) token to be
      * sent by email.
      */
-    public function createToken(int $userId): string
+    public function createToken(int $userId, int $validityHours): string
     {
         $this->deleteByUser($userId);
 
@@ -19,9 +19,9 @@ class ActivationTokenRepository implements ActivationTokenRepositoryInterface
 
         $stmt = $this->db->prepare(
             "INSERT INTO activation_token (user_id, token_hash, token_expires_at)
-             VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))"
+             VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? HOUR))"
         );
-        $stmt->bind_param('is', $userId, $tokenHash);
+        $stmt->bind_param('isi', $userId, $tokenHash, $validityHours);
         $stmt->execute();
         $stmt->close();
 

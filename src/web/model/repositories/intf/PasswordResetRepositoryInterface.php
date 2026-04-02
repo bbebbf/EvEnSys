@@ -5,10 +5,10 @@ interface PasswordResetRepositoryInterface
 {
     /**
      * Deletes any existing tokens for the user, creates a new one that
-     * expires in one hour, and returns the raw (unhashed) token to be
+     * expires in X hours, and returns the raw (unhashed) token to be
      * sent by email.
      */
-    public function createToken(int $userId): string;
+    public function createToken(int $userId, int $validityHours): string;
 
     /**
      * Hashes the raw token and looks up a record that is not yet expired

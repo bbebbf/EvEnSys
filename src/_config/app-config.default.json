@@ -20,5 +20,7 @@
     "SearchbarStartsAtItemCount": 6,
     "NewEventApprovalRequired": false,
     "EnrollmentPeriodFrom": "",
-    "EnrollmentPeriodToExcluded": ""
+    "EnrollmentPeriodToExcluded": "",
+    "ActivationTokenValidityHours": 24,
+    "PasswordResetTokenValidityHours": 2
 }
