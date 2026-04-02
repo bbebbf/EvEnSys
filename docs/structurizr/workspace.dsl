@@ -12,6 +12,7 @@ workspace "EvEnSys" "Event-Anmeldesystem – C4-Architekturmodell" {
 
         oidcProvider = softwareSystem "OIDC-Anbieter" "Optionaler externer Identity Provider (z.B. Google, Microsoft). Ermöglicht Single Sign-On." "External"
         emailClient  = softwareSystem "E-Mail-Client" "Empfängt Benachrichtigungen (Anmeldung, Abmeldung, Passwort-Reset) als Nutzer oder Administrator." "External"
+        mailjetApi   = softwareSystem "Mailjet" "Transaktionaler E-Mail-Dienst. Versendet E-Mails über die Mailjet REST API." "External"
 
         # --- EvEnSys ---
 
@@ -30,8 +31,10 @@ workspace "EvEnSys" "Event-Anmeldesystem – C4-Architekturmodell" {
                 userRepo        = component "UserRepository" "Kapselt alle Datenbankzugriffe für Benutzerkonten, Aktivierungs-Tokens und Passwort-Reset-Tokens." "PHP, MySQLi"
                 oidcIdentityRepo = component "OidcIdentityRepository" "Kapselt alle Datenbankzugriffe für OIDC-Identitätsverknüpfungen." "PHP, MySQLi"
 
-                emailGenerator   = component "EmailGenerator" "Erstellt HTML-E-Mails für alle systemseitigen Benachrichtigungen und delegiert das Versenden an EmailSenderInterface. Hängt ICS-Dateien bei Anmeldungen an." "PHP"
-                emailSenderPhpMail = component "EmailSenderPhpMail" "Implementiert EmailSenderInterface. Versendet E-Mails über PHP's mail()-Funktion. Unterstützt Text, HTML, Multipart und Anhänge." "PHP, mail()"
+                emailGenerator     = component "EmailGenerator" "Erstellt HTML-E-Mails für alle systemseitigen Benachrichtigungen und delegiert das Versenden an EmailSenderInterface. Hängt ICS-Dateien bei Anmeldungen an." "PHP"
+                emailSenderInterface = component "EmailSenderInterface" "Abstraktion für den E-Mail-Versand. Entkoppelt EmailGenerator von der konkreten Versandimplementierung." "PHP Interface"
+                emailSenderPhpMail   = component "EmailSenderPhpMail" "Implementiert EmailSenderInterface. Versendet E-Mails über PHP's mail()-Funktion. Unterstützt Text, HTML, Multipart und Anhänge." "PHP, mail()"
+                emailSenderMailjet   = component "EmailSenderMailjet" "Implementiert EmailSenderInterface. Versendet E-Mails über die Mailjet REST API (v3.1). Unterstützt Anhänge und Sandbox-Modus." "PHP, cURL"
                 icsGenerator     = component "IcsGenerator" "Erzeugt RFC-5545-konforme iCalendar-Dateien (VCALENDAR/VEVENT) aus Veranstaltungsdaten." "PHP"
                 fileTools        = component "FileTools" "Bereinigt Dateinamen für sichere Content-Disposition-Header (entfernt Windows-Sonderzeichen und reservierte Gerätenamen)." "PHP"
 
@@ -49,6 +52,7 @@ workspace "EvEnSys" "Event-Anmeldesystem – C4-Architekturmodell" {
         user  -> evEnSys "Verwaltet Veranstaltungen, meldet sich an/ab, lädt iCal herunter" "HTTPS"
         admin -> evEnSys "Verwaltet Veranstaltungen und Benutzer" "HTTPS"
         evEnSys -> emailClient "Sendet E-Mail-Benachrichtigungen" "SMTP"
+        evEnSys -> mailjetApi  "Versendet E-Mails über Mailjet REST API (optional)" "HTTPS"
         evEnSys -> oidcProvider "Authentifiziert Benutzer (optional)" "OIDC / HTTPS"
 
         # --- Beziehungen: Container ---
@@ -57,7 +61,8 @@ workspace "EvEnSys" "Event-Anmeldesystem – C4-Architekturmodell" {
         user  -> webapp "HTTP-Anfragen" "HTTP"
         admin -> webapp "HTTP-Anfragen" "HTTP"
         webapp   -> database "Liest und schreibt Daten" "MySQLi / TCP"
-        webapp   -> mailpit  "Sendet E-Mails" "SMTP"
+        webapp   -> mailpit     "Sendet E-Mails (EmailSenderPhpMail)" "SMTP"
+        webapp   -> mailjetApi  "Sendet E-Mails (EmailSenderMailjet, optional)" "HTTPS"
         webapp   -> oidcProvider "OAuth2 Authorization Code Flow" "HTTPS"
         mailpit  -> emailClient "Leitet E-Mails weiter (Produktion)" "SMTP"
 
@@ -90,11 +95,14 @@ workspace "EvEnSys" "Event-Anmeldesystem – C4-Architekturmodell" {
         oidcController -> oidcProvider     "Redirect & Token-Austausch" "HTTPS"
         oidcController -> views            "Rendert HTML-Seiten"
 
-        # EmailGenerator
-        emailGenerator -> icsGenerator       "Generiert ICS-Datei für E-Mail-Anhang"
-        emailGenerator -> fileTools          "Bereinigt Dateinamen für E-Mail-Anhang"
-        emailGenerator -> emailSenderPhpMail "Versendet E-Mail über EmailSenderInterface"
-        emailSenderPhpMail -> mailpit        "Versendet E-Mail" "SMTP"
+        # EmailGenerator → EmailSenderInterface → Implementierungen
+        emailGenerator -> icsGenerator          "Generiert ICS-Datei für E-Mail-Anhang"
+        emailGenerator -> fileTools             "Bereinigt Dateinamen für E-Mail-Anhang"
+        emailGenerator -> emailSenderInterface  "Delegiert E-Mail-Versand"
+        emailSenderPhpMail -> emailSenderInterface "Implementiert"
+        emailSenderMailjet -> emailSenderInterface "Implementiert"
+        emailSenderPhpMail -> mailpit           "Versendet E-Mail" "SMTP"
+        emailSenderMailjet -> mailjetApi        "Versendet E-Mail" "HTTPS / REST"
 
         # Repositories → Datenbank
         eventRepo        -> database "SQL-Abfragen" "MySQLi"
