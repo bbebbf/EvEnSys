@@ -63,7 +63,9 @@ class EventControllerTest extends TestCase
     public function test_index_shows_only_visible_events_for_regular_user(): void
     {
         $this->session->method('isAdmin')->willReturn(false);
-        $this->eventRepo->expects($this->once())->method('findAllUpcoming')->with(true)->willReturn([]);
+        $this->eventRepo->expects($this->once())->method('findAllUpcoming')
+            ->with($this->callback(fn($c) => $c instanceof \EventsSearchCriteria && $c->userIsAdmin === false))
+            ->willReturn([]);
         $this->view->expects($this->once())->method('render')->with('event/index', $this->anything());
 
         $this->controller->index();
@@ -72,7 +74,9 @@ class EventControllerTest extends TestCase
     public function test_index_shows_all_events_including_hidden_for_admin(): void
     {
         $this->session->method('isAdmin')->willReturn(true);
-        $this->eventRepo->expects($this->once())->method('findAllUpcoming')->with(false)->willReturn([]);
+        $this->eventRepo->expects($this->once())->method('findAllUpcoming')
+            ->with($this->callback(fn($c) => $c instanceof \EventsSearchCriteria && $c->userIsAdmin === true))
+            ->willReturn([]);
         $this->view->expects($this->once())->method('render');
 
         $this->controller->index();
@@ -306,6 +310,7 @@ class EventControllerTest extends TestCase
         string               $eventGuid          = 'abc',
         int                  $creatorUserId      = 1,
         bool                 $eventIsVisible     = true,
+        bool                 $eventIsPublished   = true,
         ?int                 $eventMaxSubscriber = null,
         \DateTimeImmutable   $eventDate          = new \DateTimeImmutable('2026-06-01 10:00:00'),
     ): \EventDto {
@@ -315,6 +320,7 @@ class EventControllerTest extends TestCase
             creatorUserId:      $creatorUserId,
             eventIsActivated:   false,
             eventIsVisible:     $eventIsVisible,
+            eventIsPublished:   $eventIsPublished,
             eventTitle:         'Test Event',
             eventDescription:   null,
             eventDate:          $eventDate,

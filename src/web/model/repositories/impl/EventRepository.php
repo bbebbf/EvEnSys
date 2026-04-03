@@ -18,7 +18,7 @@ class EventRepository implements EventRepositoryInterface
                FROM event e
                JOIN `user` u ON e.creator_user_id = u.user_id
               WHERE DATE_ADD(e.event_date, INTERVAL ? MINUTE) >= NOW()
-                AND e.event_is_visible = 1
+                AND (e.event_is_visible = 1 AND e.event_is_published = 1)
               ORDER BY e.event_date ASC
               LIMIT ?'
         );
@@ -36,16 +36,17 @@ class EventRepository implements EventRepositoryInterface
     }
 
     /** @return EventDto[] */
-    public function findAllUpcoming(bool $visibleOnly = true): array
+    public function findAllUpcoming(EventsSearchCriteria $criteria): array
     {
         $sql = 'SELECT e.*, u.user_name AS creator_name
                FROM event e
                JOIN `user` u ON e.creator_user_id = u.user_id
               WHERE DATE_ADD(e.event_date, INTERVAL ? MINUTE) >= NOW()'
-             . ($visibleOnly ? ' AND e.event_is_visible = 1' : '')
+             . ' AND ' . $this->getWhereConditionStr($criteria)
              . ' ORDER BY e.event_date ASC';
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param('i', $this->delayedStartMinutes);
+        $userId = $criteria->userId ?? 0;
+        $stmt->bind_param('ii', $this->delayedStartMinutes, $userId);
         $stmt->execute();
         $events = [];
         $result = $stmt->get_result();
@@ -59,17 +60,18 @@ class EventRepository implements EventRepositoryInterface
     }
 
     /** @return EventDto[] */
-    public function findAllNew(bool $visibleOnly = true): array
+    public function findAllNew(EventsSearchCriteria $criteria): array
     {
         $stmt = $this->db->prepare(
             'SELECT e.*, u.user_name AS creator_name
                FROM event e
                JOIN `user` u ON e.creator_user_id = u.user_id
               WHERE e.event_created_date >= DATE_SUB(NOW(), INTERVAL ? DAY)'
-             . ($visibleOnly ? ' AND e.event_is_visible = 1' : '')
+             . ' AND ' . $this->getWhereConditionStr($criteria)
              . ' ORDER BY e.event_date ASC'
         );
-        $stmt->bind_param('i', $this->newEventsDaysOld);
+        $userId = $criteria->userId ?? 0;
+        $stmt->bind_param('ii', $this->newEventsDaysOld, $userId);
         $stmt->execute();
         $events = [];
         $result = $stmt->get_result();
@@ -83,14 +85,19 @@ class EventRepository implements EventRepositoryInterface
     }
 
     /** @return EventDto[] */
-    public function findAll(bool $visibleOnly = true): array
+    public function findAll(EventsSearchCriteria $criteria): array
     {
-        $sql = 'SELECT e.*, u.user_name AS creator_name
+        $stmt = $this->db->prepare(
+            'SELECT e.*, u.user_name AS creator_name
                FROM event e
                JOIN `user` u ON e.creator_user_id = u.user_id'
-             . ($visibleOnly ? ' WHERE e.event_is_visible = 1' : '')
-             . ' ORDER BY e.event_date ASC';
-        $result = $this->db->query($sql);
+             . ' WHERE ' . $this->getWhereConditionStr($criteria)
+             . ' ORDER BY e.event_date ASC'
+        );
+        $userId = $criteria->userId ?? 0;
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
         $events = [];
         while ($row = $result->fetch_assoc()) {
             $events[] = $this->mapEventRow($row);
@@ -164,15 +171,16 @@ class EventRepository implements EventRepositoryInterface
         $guid = $this->generateGuid();
         $initialActivatedValue = $this->isNewEventApprovalRequired ?  0 : 1;
         $stmt = $this->db->prepare(
-            "INSERT INTO event (event_guid, creator_user_id, event_is_activated, event_is_visible, event_title, event_description, event_date, event_location, event_duration_hours, event_max_subscriber, event_responsible)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO event (event_guid, creator_user_id, event_is_activated, event_is_visible, event_is_published, event_title, event_description, event_date, event_location, event_duration_hours, event_max_subscriber, event_responsible)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         $stmt->bind_param(
-            'siiissssids',
+            'siiiissssids',
             $guid,
             $creatorUserId,
             $initialActivatedValue,
             $initialActivatedValue,
+            $data['event_is_published'],
             $data['event_title'],
             $data['event_description'],
             $data['event_date'],
@@ -191,13 +199,14 @@ class EventRepository implements EventRepositoryInterface
     {
         $stmt = $this->db->prepare(
             'UPDATE event
-                SET event_title = ?, event_description = ?, event_date = ?,
+                SET event_is_published = ?, event_title = ?, event_description = ?, event_date = ?,
                     event_location = ?, event_duration_hours = ?, event_max_subscriber = ?,
                     event_responsible = ?
               WHERE event_id = ?'
         );
         $stmt->bind_param(
-            'ssssdssi',
+            'issssdssi',
+            $data['event_is_published'],
             $data['event_title'],
             $data['event_description'],
             $data['event_date'],
@@ -505,6 +514,7 @@ class EventRepository implements EventRepositoryInterface
             creatorUserId:      (int)$row['creator_user_id'],
             eventIsActivated:   (bool)$row['event_is_activated'],
             eventIsVisible:     (bool)$row['event_is_visible'],
+            eventIsPublished:   (bool)$row['event_is_published'],
             eventTitle:         $row['event_title'],
             eventDescription:   $row['event_description'] ?? null,
             eventDate:          new \DateTimeImmutable($row['event_date']),
@@ -528,5 +538,16 @@ class EventRepository implements EventRepositoryInterface
             subscriberName:            $row['subscriber_name'] ?? null,
             subscriberEnrollTimestamp: new \DateTimeImmutable($row['subscriber_enroll_timestamp']),
         );
+    }
+
+    private function getWhereConditionStr(EventsSearchCriteria $criteria): string
+    {
+        $conditions = [];
+        $conditions[] = '(e.event_is_visible = 1 AND e.event_is_published = 1)';
+        $conditions[] = '(e.creator_user_id = ?)';
+        if ($criteria->userIsAdmin) {
+            $conditions[] = '(1 = 1)';
+        }
+        return '(' . implode(' OR ', $conditions). ')';
     }
 }

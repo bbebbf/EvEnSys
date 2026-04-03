@@ -14,7 +14,11 @@ class EventController
 
     public function kiosk(): void
     {
-        $events = $this->eventRepo->findAllUpcoming(true);
+        $criteria = new EventsSearchCriteria(
+            userIsAdmin: false,
+            userId: 0,
+        );
+        $events = $this->eventRepo->findAllUpcoming($criteria);
         $this->view->renderStandalone('event/kiosk', ['events' => $events]);
     }
 
@@ -30,7 +34,11 @@ class EventController
     public function index(): void
     {
         $isAdmin = $this->session->isAdmin();
-        $events  = $this->eventRepo->findAllUpcoming(!$isAdmin);
+        $criteria = new EventsSearchCriteria(
+            userIsAdmin: $isAdmin,
+            userId: $this->session->getUserId(),
+        );
+        $events  = $this->eventRepo->findAllUpcoming($criteria);
         $this->view->render('event/index', [
             'pageTitle' => 'Bevorstehende Veranstaltungen',
             'events'    => $events,
@@ -43,7 +51,11 @@ class EventController
     {
         $this->session->requireLogin();
         $isAdmin = $this->session->isAdmin();
-        $events  = $this->eventRepo->findAll(!$isAdmin);
+        $criteria = new EventsSearchCriteria(
+            userIsAdmin: $isAdmin,
+            userId: $this->session->getUserId(),
+        );
+        $events  = $this->eventRepo->findAll($criteria);
         $this->view->render('event/index', [
             'pageTitle' => 'Alle Veranstaltungen',
             'events'    => $events,
@@ -67,12 +79,16 @@ class EventController
     public function indexNew(): void
     {
         $this->session->requireLogin();
-
-        $events = $this->eventRepo->findAllNew(!$this->session->isAdmin());
+        $isAdmin = $this->session->isAdmin();
+        $criteria = new EventsSearchCriteria(
+            userIsAdmin: $isAdmin,
+            userId: $this->session->getUserId(),
+        );
+        $events = $this->eventRepo->findAllNew($criteria);
         $this->view->render('event/index', [
             'pageTitle' => 'Neue Veranstaltungen',
             'events'    => $events,
-            'isAdmin'   => $this->session->isAdmin(),
+            'isAdmin'   => $isAdmin,
             'origin'    => 'new',
         ]);
     }
@@ -465,6 +481,7 @@ class EventController
         $responsible = trim($req->post('event_responsible', ''));
         $durationRaw = trim($req->post('event_duration_hours', ''));
         $maxSubRaw   = trim($req->post('event_max_subscriber', ''));
+        $isPublished = $req->post('event_is_published', '') === '1' ? 1 : 0;
 
         $errors = [];
 
@@ -521,6 +538,7 @@ class EventController
         return [
             'errors' => $errors,
             'data'   => [
+                'event_is_published'    => $isPublished,
                 'event_title'           => $title,
                 'event_description'     => $description !== '' ? $description : null,
                 'event_date'            => $eventDate,
@@ -539,6 +557,14 @@ class EventController
                 'isFull' => true,
                 'allowed' => false,
                 'message' => 'Diese Veranstaltung ist ausgebucht.'
+            ];
+        }
+
+        if (!$event->eventIsPublished) {
+            return [
+                'isFull' => false,
+                'allowed' => false,
+                'message' => 'Anmeldungen für nicht veröffentlichte Veranstaltungen sind nicht möglich.'
             ];
         }
 

@@ -20,6 +20,7 @@ CREATE TABLE `event` (
   `creator_user_id` int(10) unsigned NOT NULL,
   `event_is_activated` bit(1) NOT NULL DEFAULT b'0',
   `event_is_visible` bit(1) NOT NULL DEFAULT b'0',
+  `event_is_published` bit(1) NOT NULL DEFAULT b'0',
   `event_title` varchar(150) NOT NULL,
   `event_description` text DEFAULT NULL,
   `event_date` datetime NOT NULL,

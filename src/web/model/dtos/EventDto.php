@@ -9,6 +9,7 @@ class EventDto
         public readonly int     $creatorUserId,
         public readonly bool    $eventIsActivated,
         public readonly bool    $eventIsVisible,
+        public readonly bool    $eventIsPublished,
         public readonly string  $eventTitle,
         public readonly ?string $eventDescription,
         public readonly \DateTimeImmutable $eventDate,

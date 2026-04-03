@@ -55,6 +55,16 @@ $action = $isEdit ? '/events/' . $event->eventGuid . '/edit' : '/events/create';
         <?php endif; ?>
       </div>
 
+      <div class="mb-3 form-check form-switch">
+        <?php $isPublished = !empty($old) ? isset($old['event_is_published']) : ($event?->eventIsPublished ?? false); ?>
+        <input type="checkbox"
+               class="form-check-input"
+               id="event_is_published" name="event_is_published"
+               value="1"
+               <?= $isPublished ? 'checked' : '' ?>>
+        <label for="event_is_published" class="form-check-label">veröffentlicht</label>
+      </div>
+
       <div class="mb-3">
         <label for="event_description" class="form-label">Beschreibung</label>
         <textarea class="form-control"

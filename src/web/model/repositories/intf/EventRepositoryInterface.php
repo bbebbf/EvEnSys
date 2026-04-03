@@ -1,19 +1,21 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/EventRepositoryTypes.php';
+
 interface EventRepositoryInterface
 {
     /** @return EventDto[] */
     public function findUpcoming(int $limit): array;
 
     /** @return EventDto[] */
-    public function findAllUpcoming(bool $visibleOnly = true): array;
+    public function findAllUpcoming(EventsSearchCriteria $criteria): array;
 
     /** @return EventDto[] */
-    public function findAll(bool $visibleOnly = true): array;
+    public function findAll(EventsSearchCriteria $criteria): array;
 
     /** @return EventDto[] */
-    public function findAllNew(bool $includeNotActivated): array;
+    public function findAllNew(EventsSearchCriteria $criteria): array;
 
     /** @return EventDto[] */
     public function findAllByUser(int $userId): array;

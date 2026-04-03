@@ -45,7 +45,7 @@
       <div class="col" data-search="<?= html_out($searchData) ?>">
 
 
-        <div class="card h-100 shadow-sm <?= $event->eventDate < $delayedCurrentDateTime ? 'bg-secondary bg-opacity-25' : (!$event->eventIsVisible ? 'bg-warning bg-opacity-25' : '') ?>">
+        <div class="card h-100 shadow-sm <?= $event->eventDate < $delayedCurrentDateTime ? 'bg-secondary bg-opacity-25' : (!$event->eventIsVisible ? 'bg-warning bg-opacity-25' : (!$event->eventIsPublished ? 'bg-danger bg-opacity-25' : '')) ?>">
           <div class="card-header d-flex justify-content-between align-items-center">
             <span>
               <i class="bi bi-calendar-event"></i>

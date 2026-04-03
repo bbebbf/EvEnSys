@@ -64,12 +64,21 @@
       <?php endif; ?>
 
       <?php if ($isAdmin || $isCreator): ?>
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">
+          <?php if ($event->eventIsPublished): ?>
+            <span class="badge bg-success">veröffentlicht</span>
+          <?php else: ?>
+            <span class="badge bg-danger">nicht veröffentlicht</span>
+          <?php endif; ?>
+        </dd>
+
         <dt class="col-sm-3">Sichtbarkeit</dt>
         <dd class="col-sm-9">
           <?php if ($event->eventIsVisible): ?>
-            <span class="badge bg-success">Sichtbar</span>
+            <span class="badge bg-success">sichtbar</span>
           <?php else: ?>
-            <span class="badge bg-warning text-dark">Versteckt</span>
+            <span class="badge bg-warning text-dark">versteckt</span>
           <?php endif; ?>
           <?php if ($isAdmin): ?>
             <form method="post" action="/events/<?= html_out($event->eventGuid) ?>/toggle-visible" class="d-inline ms-2">
