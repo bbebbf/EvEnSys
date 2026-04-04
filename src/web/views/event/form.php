@@ -55,14 +55,25 @@ $action = $isEdit ? '/events/' . $event->eventGuid . '/edit' : '/events/create';
         <?php endif; ?>
       </div>
 
-      <div class="mb-3 form-check form-switch">
+      <div class="btn-group mb-3" role="group" aria-label="radio toggle button group">
         <?php $isPublished = !empty($old) ? isset($old['event_is_published']) : ($event?->eventIsPublished ?? false); ?>
-        <input type="checkbox"
-               class="form-check-input"
-               id="event_is_published" name="event_is_published"
+        <input type="radio"
+               class="btn-check"
+               name="event_is_published"
+               id="event_is_published"
                value="1"
+               autocomplete="off"
                <?= $isPublished ? 'checked' : '' ?>>
-        <label for="event_is_published" class="form-check-label">veröffentlicht</label>
+        <label class="btn btn-outline-success" for="event_is_published">veröffentlicht</label>
+
+        <input type="radio"
+               class="btn-check"
+               name="event_is_published"
+               id="event_is_not_published"
+               value="0"
+               autocomplete="off"
+               <?= !$isPublished ? 'checked' : '' ?>>
+        <label class="btn btn-outline-danger" for="event_is_not_published">nicht veröffentlicht</label>
       </div>
 
       <div class="mb-3">
