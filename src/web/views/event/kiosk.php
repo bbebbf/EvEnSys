@@ -210,10 +210,7 @@
 
 <div class="kiosk-stage" id="stage">
 
-  <?php
-    $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
-    $baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];
-  ?>
+  <?php $baseUrl = get_base_url(); ?>
 
   <?php if (empty($events)): ?>
     <div class="kiosk-empty">

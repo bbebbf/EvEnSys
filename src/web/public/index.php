@@ -158,6 +158,9 @@ $router->get('/about',
     fn() => View::render('legal/about', ['pageTitle' => 'Über EvEnSys']));
 
 
+$router->get('/events/upcoming/feed.json', fn() => $eventController->upcomingJson($req));
+
+
 try {
     $router->dispatch();
 } catch (mysqli_sql_exception $e) {

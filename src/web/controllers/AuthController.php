@@ -78,9 +78,7 @@ class AuthController
 
         $rawToken = $this->activationRepo->createToken($userId, APP_CONFIG->getActivationTokenValidityHours());
 
-        $scheme  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];
-        $link    = $baseUrl . '/activate-account?token=' . urlencode($rawToken);
+        $link = get_base_url() . '/activate-account?token=' . urlencode($rawToken);
 
         $this->emailGenerator->sendAccountActivationEmail($email, $name, $link);
 
@@ -174,9 +172,7 @@ class AuthController
         if ($user !== null && $user->userIsActive && $user->userPasswd !== null) {
             $rawToken = $this->resetRepo->createToken($user->userId, APP_CONFIG->getPasswordResetTokenValidityHours());
 
-            $scheme  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-            $baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];
-            $link    = $baseUrl . '/reset-password?token=' . urlencode($rawToken);
+            $link = get_base_url() . '/reset-password?token=' . urlencode($rawToken);
 
             $this->emailGenerator->sendPasswordResetEmail($user->userEmail, $user->userName, $link);
         }

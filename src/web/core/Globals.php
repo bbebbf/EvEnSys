@@ -20,3 +20,10 @@ function default_datetime_out(\DateTimeInterface $aDate): string
 {
     return datetime_out($aDate, 'd.m.y / H:i:s');
 }
+
+function get_base_url(): string
+{
+    $scheme = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    return $scheme . '://' . $host;
+}

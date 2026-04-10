@@ -22,6 +22,42 @@ class EventController
         $this->view->renderStandalone('event/kiosk', ['events' => $events]);
     }
 
+    public function upcomingJson(Request $req): void
+    {
+        $criteria = new EventsSearchCriteria(
+            userIsAdmin: false,
+            userId: 0,
+        );
+        $events = $this->eventRepo->findAllUpcoming($criteria);
+
+        $baseUrl = get_base_url();
+
+        $items = array_map(fn(EventDto $e) => [
+            'id'           => $baseUrl . '/events/' . $e->eventGuid,
+            'url'          => $baseUrl . '/events/' . $e->eventGuid,
+            'title'        => $e->eventTitle,
+            'content_text' => $e->eventDescription ?? '',
+            'date_published' => $e->eventDate->format(\DateTimeInterface::ATOM),
+            '_evensys'     => array_filter([
+                'location'       => $e->eventLocation,
+                'duration_hours' => $e->eventDurationHours,
+                'max_subscriber' => $e->eventMaxSubscriber,
+                'responsible'    => $e->getResponsibleName(),
+            ], fn($v) => $v !== null),
+        ], $events);
+
+        $feed = [
+            'version' => 'https://jsonfeed.org/version/1.1',
+            'title'   => APP_CONFIG->getAppTitleShort() . ' [Bevorstehende Veranstaltungen]',
+            'home_page_url' => $baseUrl . '/',
+            'feed_url'      => $baseUrl . $req->uri(),
+            'items'         => $items,
+        ];
+
+        header('Content-Type: application/feed+json; charset=utf-8');
+        print(json_encode($feed, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
+
     public function home(): void
     {
         $upcomingEvents = $this->eventRepo->findUpcoming(3);
@@ -160,8 +196,7 @@ class EventController
             $this->response->redirect('/events/' . $guid);
         }
 
-        $scheme    = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $eventLink = $scheme . '://' . $_SERVER['HTTP_HOST'] . '/events/' . $guid;
+        $eventLink = get_base_url() . '/events/' . $guid;
         $eventDate = event_date_out($event->eventDate);
 
         $creator      = $this->userRepo->findById($event->creatorUserId);
@@ -358,8 +393,7 @@ class EventController
         $guid        = $this->eventRepo->create($this->session->getUserId(), $data);
         $createdEvent = $this->eventRepo->findByGuid($guid);
 
-        $scheme    = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $eventLink = $scheme . '://' . $_SERVER['HTTP_HOST'] . '/events/' . $guid;
+        $eventLink = get_base_url() . '/events/' . $guid;
         $eventDate = event_date_out(new DateTimeImmutable($data['event_date']));
         if ($createdEvent !== null) {
             $this->emailGenerator->sendEventCreatedEmail(
