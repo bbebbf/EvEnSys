@@ -43,18 +43,6 @@ $action = $isEdit ? '/events/' . $event->eventGuid . '/edit' : '/events/create';
     <form method="post" action="<?= html_out($action) ?>" novalidate>
       <input type="hidden" name="_csrf" value="<?= html_out(Session::getCsrfToken()) ?>">
 
-      <div class="mb-3">
-        <label for="event_title" class="form-label">Titel <span class="text-danger">*</span></label>
-        <input type="text"
-               class="form-control <?= isset($errors['event_title']) ? 'is-invalid' : '' ?>"
-               id="event_title" name="event_title"
-               value="<?= html_out($val('event_title', 'eventTitle')) ?>"
-               required maxlength="150" autofocus>
-        <?php if (isset($errors['event_title'])): ?>
-          <div class="invalid-feedback"><?= html_out($errors['event_title']) ?></div>
-        <?php endif; ?>
-      </div>
-
       <div class="btn-group mb-3" role="group" aria-label="radio toggle button group">
         <?php $isPublished = !empty($old) ? isset($old['event_is_published']) : ($event?->eventIsPublished ?? true); ?>
         <input type="radio"
@@ -77,10 +65,16 @@ $action = $isEdit ? '/events/' . $event->eventGuid . '/edit' : '/events/create';
       </div>
 
       <div class="mb-3">
-        <label for="event_description" class="form-label">Beschreibung</label>
-        <textarea class="form-control"
-                  id="event_description" name="event_description"
-                  rows="6"><?= html_out($val('event_description', 'eventDescription')) ?></textarea>
+        <label for="event_title" class="form-label">Titel <span class="text-danger">*</span></label>
+        <input type="text"
+               class="form-control <?= isset($errors['event_title']) ? 'is-invalid' : '' ?>"
+               id="event_title" name="event_title"
+               value="<?= html_out($val('event_title', 'eventTitle')) ?>"
+               <?= isset($errors['event_title']) ? 'autofocus' : '' ?>
+               required maxlength="150">
+        <?php if (isset($errors['event_title'])): ?>
+          <div class="invalid-feedback"><?= html_out($errors['event_title']) ?></div>
+        <?php endif; ?>
       </div>
 
       <div class="mb-3">
@@ -98,6 +92,7 @@ $action = $isEdit ? '/events/' . $event->eventGuid . '/edit' : '/events/create';
                class="form-control <?= isset($errors['event_date']) ? 'is-invalid' : '' ?>"
                id="event_date" name="event_date"
                value="<?= $dateValue ?>"
+               <?= isset($errors['event_date']) ? 'autofocus' : '' ?>
                <?= $minEventDate !== null ? 'min="' . $minEventDate . '"' : '' ?>
                <?= $maxEventDate !== null ? 'max="' . $maxEventDate . '"' : '' ?>
                required>
@@ -107,11 +102,19 @@ $action = $isEdit ? '/events/' . $event->eventGuid . '/edit' : '/events/create';
       </div>
 
       <div class="mb-3">
+        <label for="event_description" class="form-label">Beschreibung</label>
+        <textarea class="form-control"
+                  id="event_description" name="event_description"
+                  rows="6"><?= html_out($val('event_description', 'eventDescription')) ?></textarea>
+      </div>
+
+      <div class="mb-3">
         <label for="event_responsible" class="form-label">Verantwortlich (nur einzutragen, falls abweichend)</label>
         <input type="text"
                class="form-control <?= isset($errors['event_responsible']) ? 'is-invalid' : '' ?>"
                id="event_responsible" name="event_responsible"
                value="<?= html_out($val('event_responsible', 'eventResponsible')) ?>"
+               <?= isset($errors['event_responsible']) ? 'autofocus' : '' ?>
                maxlength="150">
         <?php if (isset($errors['event_responsible'])): ?>
           <div class="invalid-feedback"><?= html_out($errors['event_responsible']) ?></div>
@@ -124,6 +127,7 @@ $action = $isEdit ? '/events/' . $event->eventGuid . '/edit' : '/events/create';
                class="form-control <?= isset($errors['event_location']) ? 'is-invalid' : '' ?>"
                id="event_location" name="event_location"
                value="<?= html_out($val('event_location', 'eventLocation')) ?>"
+               <?= isset($errors['event_location']) ? 'autofocus' : '' ?>
                maxlength="150">
         <?php if (isset($errors['event_location'])): ?>
           <div class="invalid-feedback"><?= html_out($errors['event_location']) ?></div>
@@ -137,6 +141,7 @@ $action = $isEdit ? '/events/' . $event->eventGuid . '/edit' : '/events/create';
                  class="form-control <?= isset($errors['event_duration_hours']) ? 'is-invalid' : '' ?>"
                  id="event_duration_hours" name="event_duration_hours"
                  value="<?= html_out($val('event_duration_hours', 'eventDurationHours')) ?>"
+                 <?= isset($errors['event_duration_hours']) ? 'autofocus' : '' ?>
                  step="0.5" min="0.5">
           <?php if (isset($errors['event_duration_hours'])): ?>
             <div class="invalid-feedback"><?= html_out($errors['event_duration_hours']) ?></div>
@@ -149,6 +154,7 @@ $action = $isEdit ? '/events/' . $event->eventGuid . '/edit' : '/events/create';
                  class="form-control <?= isset($errors['event_max_subscriber']) ? 'is-invalid' : '' ?>"
                  id="event_max_subscriber" name="event_max_subscriber"
                  value="<?= html_out($val('event_max_subscriber', 'eventMaxSubscriber')) ?>"
+                 <?= isset($errors['event_max_subscriber']) ? 'autofocus' : '' ?>
                  min="1" step="1">
           <?php if (isset($errors['event_max_subscriber'])): ?>
             <div class="invalid-feedback"><?= html_out($errors['event_max_subscriber']) ?></div>
