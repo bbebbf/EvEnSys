@@ -88,7 +88,7 @@
             <?php if ($event->eventMaxSubscriber !== null): ?>
               &nbsp;<i class="bi bi-people"></i> max. <?= html_out($event->eventMaxSubscriber) ?>
             <?php endif; ?>
-            <?php if ($event->eventLocation !== null): ?>
+            <?php if (Session::isLoggedIn() && $event->eventLocation !== null): ?>
               &nbsp;<i class="bi bi-geo-alt"></i> <?= html_out($event->eventLocation) ?>
             <?php endif; ?>
             </span>

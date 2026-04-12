@@ -238,7 +238,7 @@
             <?php endif; ?>
 
             <div class="event-meta">
-              <?php if ($event->eventLocation !== null): ?>
+              <?php if (Session::isLoggedIn() && $event->eventLocation !== null): ?>
                 <span class="meta-pill"><i class="bi bi-geo-alt"></i><?= html_out($event->eventLocation) ?></span>
               <?php endif; ?>
               <?php if ($event->eventDurationHours !== null): ?>

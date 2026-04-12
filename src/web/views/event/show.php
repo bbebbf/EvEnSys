@@ -43,7 +43,7 @@
       <dt class="col-sm-3">Datum &amp; Uhrzeit</dt>
       <dd class="col-sm-9"><?= event_date_out($event->eventDate) ?></dd>
 
-      <?php if ($event->eventLocation !== null): ?>
+      <?php if (Session::isLoggedIn() && $event->eventLocation !== null): ?>
         <dt class="col-sm-3">Veranstaltungsort</dt>
         <dd class="col-sm-9"><?= html_out($event->eventLocation) ?></dd>
       <?php endif; ?>
