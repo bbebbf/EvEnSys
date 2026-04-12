@@ -355,7 +355,7 @@ class EventRepository implements EventRepositoryInterface
     }
 
     /** @return SubscriberDto[] */
-    public function findAllEnrollments(): array
+    public function findAllUpcomingEnrollments(): array
     {
         $stmt = $this->db->prepare(
             'SELECT s.subscriber_id, s.subscriber_guid, s.event_id, s.creator_user_id,
@@ -366,8 +366,10 @@ class EventRepository implements EventRepositoryInterface
                FROM subscriber s
                JOIN event e ON s.event_id = e.event_id
                JOIN `user` u ON s.creator_user_id = u.user_id
+              WHERE DATE_ADD(e.event_date, INTERVAL ? MINUTE) >= NOW()
               ORDER BY e.event_date ASC, s.subscriber_enroll_timestamp ASC'
         );
+        $stmt->bind_param('i', $this->delayedStartMinutes);
         $stmt->execute();
         $rows   = [];
         $result = $stmt->get_result();

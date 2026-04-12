@@ -54,7 +54,7 @@
               <?php if (Session::isAdmin()): ?>
                 <div class="dropdown-divider"></div>
                 <li><a class="dropdown-item" href="/admin/users"><i class="bi bi-people"></i> Benutzerverwaltung</a></li>
-                <li><a class="dropdown-item" href="/admin/enrollments"><i class="bi bi-list-check"></i> Alle Anmeldungen</a></li>
+                <li><a class="dropdown-item" href="/admin/enrollments"><i class="bi bi-list-check"></i> Alle bevorstehenden Anmeldungen</a></li>
               <?php endif; ?>
 
               <div class="dropdown-divider"></div>

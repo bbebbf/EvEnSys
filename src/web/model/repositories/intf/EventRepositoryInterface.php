@@ -49,7 +49,7 @@ interface EventRepositoryInterface
     public function findEnrolledByUser(int $userId): array;
 
     /** @return SubscriberDto[] */
-    public function findAllEnrollments(): array;
+    public function findAllUpcomingEnrollments(): array;
 
     public function countSubscribers(int $eventId): int;
 

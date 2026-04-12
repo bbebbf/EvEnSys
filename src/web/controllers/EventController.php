@@ -145,9 +145,9 @@ class EventController
         if (!$this->session->isAdmin()) {
             $this->response->abort403();
         }
-        $enrollments = $this->eventRepo->findAllEnrollments();
+        $enrollments = $this->eventRepo->findAllUpcomingEnrollments();
         $this->view->render('event/admin_enrolled', [
-            'pageTitle'   => 'Alle Anmeldungen',
+            'pageTitle'   => 'Alle bevorstehenden Anmeldungen',
             'enrollments' => $enrollments,
         ]);
     }
