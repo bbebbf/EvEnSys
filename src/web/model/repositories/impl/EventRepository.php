@@ -66,7 +66,7 @@ class EventRepository implements EventRepositoryInterface
             'SELECT e.*, u.user_name AS creator_name
                FROM event e
                JOIN `user` u ON e.creator_user_id = u.user_id
-              WHERE e.event_created_date >= DATE_SUB(NOW(), INTERVAL ? DAY)'
+              WHERE e.event_updated_date >= DATE_SUB(NOW(), INTERVAL ? DAY)'
              . ' AND ' . $this->getWhereConditionStr($criteria)
              . ' ORDER BY e.event_date ASC'
         );
@@ -524,6 +524,7 @@ class EventRepository implements EventRepositoryInterface
             eventDurationHours: isset($row['event_duration_hours']) ? (float)$row['event_duration_hours'] : null,
             eventMaxSubscriber: isset($row['event_max_subscriber']) ? (int)$row['event_max_subscriber'] : null,
             eventCreatedDate:   isset($row['event_created_date']) ? new \DateTimeImmutable($row['event_created_date']) : null,
+            eventUpdatedDate:   isset($row['event_updated_date']) ? new \DateTimeImmutable($row['event_updated_date']) : null,
             creatorName:        $row['creator_name'] ?? null,
             eventResponsible:   $row['event_responsible'] ?? null,
         );

@@ -17,6 +17,7 @@ class EventDto
         public readonly ?float  $eventDurationHours,
         public readonly ?int    $eventMaxSubscriber,
         public readonly ?\DateTimeImmutable $eventCreatedDate = null,
+        public readonly ?\DateTimeImmutable $eventUpdatedDate = null,
         public readonly ?string $creatorName = null,
         public readonly ?string $eventResponsible = null,
     ) {}
