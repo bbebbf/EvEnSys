@@ -43,9 +43,15 @@
       <dt class="col-sm-3">Datum &amp; Uhrzeit</dt>
       <dd class="col-sm-9"><?= event_datetime_out($event->eventDate) ?></dd>
 
-      <?php if (Session::isLoggedIn() && $event->eventLocation !== null): ?>
+      <?php if ($event->eventLocation !== null): ?>
         <dt class="col-sm-3">Veranstaltungsort</dt>
-        <dd class="col-sm-9"><?= html_out($event->eventLocation) ?></dd>
+        <dd class="col-sm-9">
+          <?php if (Session::isLoggedIn()): ?>
+            <?= html_out($event->eventLocation) ?>
+          <?php else: ?>
+            <span class="text-muted">(ist nur für angemeldete Benutzer sichtbar)</span>
+          <?php endif; ?>
+        </dd>
       <?php endif; ?>
 
       <?php if ($event->eventDurationHours !== null): ?>
@@ -58,13 +64,17 @@
         <dd class="col-sm-9"><?= html_out($event->eventMaxSubscriber) ?></dd>
       <?php endif; ?>
 
-      <?php if (Session::isLoggedIn()): ?>
-        <dt class="col-sm-3">Verantwortlich</dt>
-        <dd class="col-sm-9"><?= html_out($event->getResponsibleName() ?? 'Unbekannt') ?></dd>
-        <?php if ($isAdmin): ?>
-          <dt class="col-sm-3">Eingetragen durch</dt>
-          <dd class="col-sm-9"><?= html_out($event->creatorName ?? 'Unbekannt') ?></dd>
+      <dt class="col-sm-3">Verantwortlich</dt>
+      <dd class="col-sm-9">
+        <?php if (Session::isLoggedIn()): ?>
+          <?= html_out($event->getResponsibleName() ?? 'Unbekannt') ?>
+        <?php else: ?>
+            <span class="text-muted">(ist nur für angemeldete Benutzer sichtbar)</span>
         <?php endif; ?>
+      </dd>
+      <?php if (Session::isLoggedIn() && $isAdmin): ?>
+        <dt class="col-sm-3">Eingetragen durch</dt>
+        <dd class="col-sm-9"><?= html_out($event->creatorName ?? 'Unbekannt') ?></dd>
       <?php endif; ?>
 
       <?php if ($isAdmin || $isCreator): ?>
