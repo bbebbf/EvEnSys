@@ -573,6 +573,11 @@ class EventRepository implements EventRepositoryInterface
         if ($criteria->userIsAdmin) {
             $conditions[] = '(1 = 1)';
         }
-        return '(' . implode(' OR ', $conditions). ')';
+        $whereCondition = '(' . implode(' OR ', $conditions) . ')';
+        if ($criteria->seatsAvailableOnly) {
+            $whereCondition .= ' AND (e.event_max_subscriber IS NULL OR' .
+                ' (SELECT COUNT(*) FROM subscriber s WHERE s.event_id = e.event_id) < e.event_max_subscriber)';
+        }
+        return '(' . $whereCondition . ')';
     }
 }

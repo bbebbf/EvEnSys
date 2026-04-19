@@ -17,6 +17,7 @@ class EventController
         $criteria = new EventsSearchCriteria(
             userIsAdmin: false,
             userId: 0,
+            seatsAvailableOnly: true,
         );
         $events = $this->eventRepo->findAllUpcoming($criteria);
         $this->view->renderStandalone('event/kiosk', ['events' => $events]);

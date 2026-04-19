@@ -6,5 +6,6 @@ class EventsSearchCriteria
     public function __construct(
         public readonly bool $userIsAdmin,
         public readonly ?int $userId,
+        public readonly bool $seatsAvailableOnly = false,
     ) {}
 }

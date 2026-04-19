@@ -302,6 +302,49 @@ class EventControllerTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // kiosk()
+    // -------------------------------------------------------------------------
+
+    public function test_kiosk_calls_findAllUpcoming_with_seatsAvailableOnly_true(): void
+    {
+        $this->eventRepo->expects($this->once())
+            ->method('findAllUpcoming')
+            ->with($this->callback(
+                fn($c) => $c instanceof \EventsSearchCriteria
+                    && $c->seatsAvailableOnly === true
+                    && $c->userIsAdmin === false
+                    && $c->userId === 0
+            ))
+            ->willReturn([]);
+
+        $this->view->expects($this->once())->method('renderStandalone')->with('event/kiosk', $this->anything());
+
+        $this->controller->kiosk();
+    }
+
+    public function test_kiosk_passes_events_to_view(): void
+    {
+        $event = $this->makeEvent();
+
+        $this->eventRepo->method('findAllUpcoming')->willReturn([$event]);
+        $this->view->expects($this->once())
+            ->method('renderStandalone')
+            ->with('event/kiosk', $this->callback(fn($d) => $d['events'] === [$event]));
+
+        $this->controller->kiosk();
+    }
+
+    public function test_kiosk_passes_empty_list_when_no_seats_available(): void
+    {
+        $this->eventRepo->method('findAllUpcoming')->willReturn([]);
+        $this->view->expects($this->once())
+            ->method('renderStandalone')
+            ->with('event/kiosk', $this->callback(fn($d) => $d['events'] === []));
+
+        $this->controller->kiosk();
+    }
+
+    // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
 
